@@ -109,6 +109,10 @@ function doPost(e) {
     if (action === "generateInvoicePdf") return generateInvoicePdf(data);
     if (action === "generateReceiptPdf") return generateReceiptPdf(data);
     if (action === "generateDeliverySlipPdf") return generateDeliverySlipPdf(data);
+    if (action === "sendOrderDocumentsEmail") return sendOrderDocumentsEmail(data);
+    if (action === "sendOrderInvoiceEmail") return sendOrderInvoiceEmail(data.email || "", data.orderId);
+    if (action === "sendOrderReceiptEmail") return sendOrderReceiptEmail(data.email || "", data.orderId);
+    if (action === "sendOrderDeliverySlipEmail") return sendOrderDeliverySlipEmail(data.email || "", data.orderId);
 
     // Reports
     if (action === "exportReportCsv") return exportReportCsv(data);
@@ -168,7 +172,7 @@ function setupSheets() {
   createSheet(SHEETS.orders, [
     "Created At","Shop ID","Order ID","Customer ID","Customer Name","Phone","Address","Township",
     "Subtotal","Discount","Delivery Fee","Tax","Grand Total","Payment Method","Payment Status",
-    "Order Status","Partner ID","Commission Amount","Blue Danube Profit","Remarks"
+    "Order Status","Partner ID","Commission Amount","Blue Danube Profit","Remarks","Email"
   ]);
 
   createSheet(SHEETS.orderItems, [
@@ -345,7 +349,7 @@ function createOrder(data) {
     data.phone || "", data.address || "", data.township || "",
     subtotal, discount, deliveryFee, tax, grandTotal,
     data.paymentMethod || "", "Unpaid", "Pending",
-    data.partnerId || "", commissionAmount, profit, data.remarks || ""
+    data.partnerId || "", commissionAmount, profit, data.remarks || "", data.email || ""
   ]);
 
   items.forEach(function(item) {
@@ -357,7 +361,7 @@ function createOrder(data) {
     createPartnerCommission(shopId, partner, orderId, grandTotal, commissionAmount);
   }
 
-  sendOrderEmail(data.email || "", data.customerName, orderId, grandTotal);
+  sendOrderInvoiceEmail(data.email || "", orderId);
   logActivity(shopId, "System", "createOrder", orderId);
 
   return json({ success: true, orderId, grandTotal, commissionAmount, profit });
@@ -404,6 +408,10 @@ function verifyPayment(data) {
 
   updateOrderField(data.orderId, "Payment Status", "Paid");
   updateOrderField(data.orderId, "Order Status", "Confirmed");
+
+  try {
+    sendOrderReceiptEmail("", data.orderId);
+  } catch (err) {}
 
   return json({ success: true, paymentId });
 }
@@ -1693,4 +1701,235 @@ function generateAllOrderDocuments(data) {
 function roleCheck(data) {
   const allowed = hasPermission(data.role || "Staff", data.permission || "");
   return json({ success: true, allowed });
+}
+
+
+/* ======================================================
+   PDF EMAIL ATTACHMENT SYSTEM
+====================================================== */
+
+function sendOrderDocumentsEmail(data) {
+  const orderId = data.orderId;
+  const email = data.email || "";
+  const types = data.types || ["invoice", "receipt", "delivery"];
+
+  if (!orderId) return json({ success: false, message: "Order ID required" });
+
+  const sent = [];
+
+  if (types.includes("invoice")) {
+    const r = sendOrderInvoiceEmail(email, orderId, true);
+    sent.push("invoice");
+  }
+
+  if (types.includes("receipt")) {
+    const r = sendOrderReceiptEmail(email, orderId, true);
+    sent.push("receipt");
+  }
+
+  if (types.includes("delivery")) {
+    const r = sendOrderDeliverySlipEmail(email, orderId, true);
+    sent.push("delivery");
+  }
+
+  return json({ success: true, orderId: orderId, sent: sent });
+}
+
+function sendOrderInvoiceEmail(email, orderId, silent) {
+  const bundle = createOrderPdfBundle(orderId, "INVOICE");
+  if (!bundle.success) return silent ? bundle : json(bundle);
+
+  const to = resolveOrderEmail(bundle.order, email);
+  if (!to) return silent ? { success: false, message: "Customer email not found" } : json({ success: false, message: "Customer email not found" });
+
+  const subject = "Blue Danube Invoice - " + orderId;
+  const body =
+    "<h2>Blue Danube</h2>" +
+    "<p>Dear " + esc(bundle.order["Customer Name"]) + ",</p>" +
+    "<p>Your order invoice is attached as a PDF.</p>" +
+    "<p><b>Order ID:</b> " + esc(orderId) + "</p>" +
+    "<p><b>Total:</b> " + esc(bundle.order["Grand Total"]) + " MMK</p>";
+
+  const result = sendEmailLoggedWithAttachments(
+    bundle.order["Shop ID"],
+    to,
+    subject,
+    "invoice-pdf",
+    body,
+    [bundle.invoiceBlob]
+  );
+
+  return silent ? result : json(result);
+}
+
+function sendOrderReceiptEmail(email, orderId, silent) {
+  const bundle = createOrderPdfBundle(orderId, "RECEIPT");
+  if (!bundle.success) return silent ? bundle : json(bundle);
+
+  const to = resolveOrderEmail(bundle.order, email);
+  if (!to) return silent ? { success: false, message: "Customer email not found" } : json({ success: false, message: "Customer email not found" });
+
+  const subject = "Blue Danube Receipt - " + orderId;
+  const body =
+    "<h2>Blue Danube</h2>" +
+    "<p>Dear " + esc(bundle.order["Customer Name"]) + ",</p>" +
+    "<p>Your payment receipt is attached as a PDF.</p>" +
+    "<p><b>Order ID:</b> " + esc(orderId) + "</p>" +
+    "<p><b>Payment Status:</b> " + esc(bundle.order["Payment Status"]) + "</p>" +
+    "<p><b>Total:</b> " + esc(bundle.order["Grand Total"]) + " MMK</p>";
+
+  const result = sendEmailLoggedWithAttachments(
+    bundle.order["Shop ID"],
+    to,
+    subject,
+    "receipt-pdf",
+    body,
+    [bundle.receiptBlob]
+  );
+
+  return silent ? result : json(result);
+}
+
+function sendOrderDeliverySlipEmail(email, orderId, silent) {
+  const bundle = createOrderPdfBundle(orderId, "DELIVERY");
+  if (!bundle.success) return silent ? bundle : json(bundle);
+
+  const to = resolveOrderEmail(bundle.order, email);
+  if (!to) return silent ? { success: false, message: "Customer email not found" } : json({ success: false, message: "Customer email not found" });
+
+  const subject = "Blue Danube Delivery Slip - " + orderId;
+  const body =
+    "<h2>Blue Danube</h2>" +
+    "<p>Dear " + esc(bundle.order["Customer Name"]) + ",</p>" +
+    "<p>Your delivery slip is attached as a PDF.</p>" +
+    "<p><b>Order ID:</b> " + esc(orderId) + "</p>";
+
+  const result = sendEmailLoggedWithAttachments(
+    bundle.order["Shop ID"],
+    to,
+    subject,
+    "delivery-slip-pdf",
+    body,
+    [bundle.deliveryBlob]
+  );
+
+  return silent ? result : json(result);
+}
+
+function createOrderPdfBundle(orderId, mode) {
+  const order = findRowObject(SHEETS.orders, "Order ID", orderId);
+  if (!order) return { success: false, message: "Order not found" };
+
+  const items = getSheetDataArray(SHEETS.orderItems)
+    .filter(function(i) {
+      return String(i["Order ID"]) === String(orderId);
+    });
+
+  let invoiceBlob = null;
+  let receiptBlob = null;
+  let deliveryBlob = null;
+
+  if (mode === "INVOICE" || mode === "ALL") {
+    const html = buildInvoiceHtml(order, items, "INVOICE");
+    const pdf = createPdfFromHtml(html, "Blue_Danube_Invoices", "Invoice-" + orderId + ".pdf");
+    saveDocument(order["Shop ID"], "Invoice PDF", orderId, pdf.url);
+    invoiceBlob = pdf.blob;
+  }
+
+  if (mode === "RECEIPT" || mode === "ALL") {
+    const html = buildInvoiceHtml(order, items, "RECEIPT");
+    const pdf = createPdfFromHtml(html, "Blue_Danube_Receipts", "Receipt-" + orderId + ".pdf");
+    saveDocument(order["Shop ID"], "Receipt PDF", orderId, pdf.url);
+    receiptBlob = pdf.blob;
+  }
+
+  if (mode === "DELIVERY" || mode === "ALL") {
+    const html = buildBlueDanubeDeliverySlipHtml(order);
+    const pdf = createPdfFromHtml(html, "Blue_Danube_Delivery_Slips", "Delivery-" + orderId + ".pdf");
+    saveDocument(order["Shop ID"], "Delivery Slip PDF", orderId, pdf.url);
+    deliveryBlob = pdf.blob;
+  }
+
+  return {
+    success: true,
+    order: order,
+    invoiceBlob: invoiceBlob,
+    receiptBlob: receiptBlob,
+    deliveryBlob: deliveryBlob
+  };
+}
+
+function buildBlueDanubeDeliverySlipHtml(order) {
+  return (
+    "<html><body style='font-family:Arial;padding:28px;color:#111827;'>" +
+    "<div style='border:2px solid #111827;border-radius:18px;padding:24px;'>" +
+    "<h1 style='margin:0;'>BLUE DANUBE DELIVERY SLIP</h1>" +
+    "<p style='color:#6b7280;'>Commercial Marketplace</p>" +
+    "<hr>" +
+    "<p><b>Order ID:</b> " + esc(order["Order ID"]) + "</p>" +
+    "<p><b>Customer:</b> " + esc(order["Customer Name"]) + "</p>" +
+    "<p><b>Phone:</b> " + esc(order.Phone) + "</p>" +
+    "<p><b>Address:</b> " + esc(order.Address) + "</p>" +
+    "<p><b>Township:</b> " + esc(order.Township) + "</p>" +
+    "<p><b>Payment:</b> " + esc(order["Payment Status"]) + "</p>" +
+    "<h2>Total: " + esc(order["Grand Total"]) + " MMK</h2>" +
+    "<br><br><p>Receiver Signature: ____________________</p>" +
+    "</div></body></html>"
+  );
+}
+
+function resolveOrderEmail(order, fallbackEmail) {
+  if (fallbackEmail) return fallbackEmail;
+  if (order.Email) return order.Email;
+  if (order.email) return order.email;
+
+  if (order["Customer ID"]) {
+    const customer = findRowObject(SHEETS.customers, "Customer ID", order["Customer ID"]);
+    if (customer && customer.Email) return customer.Email;
+  }
+
+  return "";
+}
+
+function sendEmailLoggedWithAttachments(shopId, to, subject, type, htmlBody, attachments) {
+  const emailId = generateId("EML", SHEETS.emailLogs);
+
+  try {
+    GmailApp.sendEmail(to, subject, "", {
+      htmlBody:
+        "<div style='font-family:Arial,Helvetica,sans-serif;background:#f3f4f6;padding:28px;'>" +
+        "<div style='max-width:680px;margin:0 auto;background:#ffffff;border-radius:22px;padding:28px;border:1px solid #e5e7eb;'>" +
+        htmlBody +
+        "<hr style='border:none;border-top:1px solid #e5e7eb;margin:26px 0;'>" +
+        "<p style='font-size:12px;color:#6b7280;'>This is an automated email from Blue Danube ERP.</p>" +
+        "</div></div>",
+      attachments: attachments || []
+    });
+
+    getSheet(SHEETS.emailLogs).appendRow([
+      new Date(),
+      shopId || DEFAULT_SHOP_ID,
+      emailId,
+      to,
+      subject,
+      type,
+      "Sent",
+      ""
+    ]);
+
+    return { success: true, emailId: emailId };
+  } catch (err) {
+    getSheet(SHEETS.emailLogs).appendRow([
+      new Date(),
+      shopId || DEFAULT_SHOP_ID,
+      emailId,
+      to,
+      subject,
+      type,
+      "Failed",
+      err.message
+    ]);
+
+    return { success: false, message: err.message };
+  }
 }

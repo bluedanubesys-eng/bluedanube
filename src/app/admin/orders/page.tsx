@@ -5,7 +5,36 @@ import { CONFIG } from "@/lib/config";
 import { useState } from "react";
 
 export default function OrdersPage(){const[msg,setMsg]=useState("");async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);const r=await erpPost({action:"createOrder",shopId:CONFIG.defaultShopId,customerName:f.get("customerName"),phone:f.get("phone"),email:f.get("email"),address:f.get("address"),township:f.get("township"),paymentMethod:f.get("paymentMethod"),deliveryFee:Number(f.get("deliveryFee")||0),discount:Number(f.get("discount")||0),partnerId:f.get("partnerId"),items:[{productId:f.get("productId"),productName:f.get("productName"),qty:Number(f.get("qty")||1),unitPrice:Number(f.get("unitPrice")||0)}]});setMsg(r.success?`Order ${r.orderId} Total ${r.grandTotal} MMK`:r.message)}
-return <AdminLayout><h1 className="text-3xl font-bold">Orders</h1><div className="mt-6 rounded-3xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-black">PDF Documents</h2><form onSubmit={async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const orderId=f.get("orderId"); await erpPost({action:"generateInvoicePdf",orderId}); await erpPost({action:"generateReceiptPdf",orderId}); await erpPost({action:"generateDeliverySlipPdf",orderId}); alert("PDF documents generated. Check Documents sheet.");}} className="mt-4 flex gap-3"><input name="orderId" placeholder="Order ID" className="flex-1 rounded-xl border px-4 py-3"/><button className="rounded-xl bg-blue-950 px-5 py-3 font-black text-white">Generate Invoice / Receipt / Delivery Slip</button></form></div><form onSubmit={submit} className="mt-8 grid max-w-5xl gap-4 rounded-2xl border bg-white p-6"><input name="customerName" required placeholder="Customer Name" className="rounded-xl border px-4 py-3"/><input name="phone" placeholder="Phone" className="rounded-xl border px-4 py-3"/><input name="email" placeholder="Email" className="rounded-xl border px-4 py-3"/><input name="address" placeholder="Address" className="rounded-xl border px-4 py-3"/><input name="township" placeholder="Township" className="rounded-xl border px-4 py-3"/><div className="grid gap-4 md:grid-cols-4"><input name="productId" required placeholder="Product ID" className="rounded-xl border px-4 py-3"/><input name="productName" required placeholder="Product Name" className="rounded-xl border px-4 py-3"/><input name="qty" type="number" defaultValue="1" className="rounded-xl border px-4 py-3"/><input name="unitPrice" type="number" placeholder="Unit Price" className="rounded-xl border px-4 py-3"/></div><div className="grid gap-4 md:grid-cols-4"><input name="paymentMethod" placeholder="Payment Method" className="rounded-xl border px-4 py-3"/><input name="deliveryFee" type="number" placeholder="Delivery Fee" className="rounded-xl border px-4 py-3"/><input name="discount" type="number" placeholder="Discount" className="rounded-xl border px-4 py-3"/><input name="partnerId" placeholder="Partner ID" className="rounded-xl border px-4 py-3"/></div><button className="rounded-xl bg-blue-950 px-6 py-3 font-semibold text-white">Create Order</button>{msg&&<p className="font-semibold">{msg}</p>}<div className="mt-6 rounded-2xl border bg-white p-6">
+return <AdminLayout><h1 className="text-3xl font-bold">Orders</h1>
+
+<div className="mt-6 rounded-3xl border bg-white p-6 shadow-sm">
+  <h2 className="text-xl font-black">Email PDF Documents</h2>
+  <p className="mt-2 text-sm text-slate-500">
+    Send invoice, receipt, and delivery slip PDF attachments to customer Gmail.
+  </p>
+
+  <form
+    onSubmit={async e => {
+      e.preventDefault();
+      const f = new FormData(e.currentTarget);
+      const r = await erpPost({
+        action: "sendOrderDocumentsEmail",
+        shopId: CONFIG.defaultShopId,
+        orderId: f.get("orderId"),
+        email: f.get("email"),
+        types: ["invoice", "receipt", "delivery"]
+      });
+      alert(r.success ? "PDF documents sent to customer Gmail." : r.message);
+    }}
+    className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto]"
+  >
+    <input name="orderId" required placeholder="Order ID" className="rounded-xl border px-4 py-3" />
+    <input name="email" type="email" placeholder="Customer Gmail optional" className="rounded-xl border px-4 py-3" />
+    <button className="rounded-xl bg-blue-950 px-5 py-3 font-black text-white">
+      Send PDFs by Email
+    </button>
+  </form>
+</div><div className="mt-6 rounded-3xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-black">PDF Documents</h2><form onSubmit={async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const orderId=f.get("orderId"); await erpPost({action:"generateInvoicePdf",orderId}); await erpPost({action:"generateReceiptPdf",orderId}); await erpPost({action:"generateDeliverySlipPdf",orderId}); alert("PDF documents generated. Check Documents sheet.");}} className="mt-4 flex gap-3"><input name="orderId" placeholder="Order ID" className="flex-1 rounded-xl border px-4 py-3"/><button className="rounded-xl bg-blue-950 px-5 py-3 font-black text-white">Generate Invoice / Receipt / Delivery Slip</button></form></div><form onSubmit={submit} className="mt-8 grid max-w-5xl gap-4 rounded-2xl border bg-white p-6"><input name="customerName" required placeholder="Customer Name" className="rounded-xl border px-4 py-3"/><input name="phone" placeholder="Phone" className="rounded-xl border px-4 py-3"/><input name="email" placeholder="Email" className="rounded-xl border px-4 py-3"/><input name="address" placeholder="Address" className="rounded-xl border px-4 py-3"/><input name="township" placeholder="Township" className="rounded-xl border px-4 py-3"/><div className="grid gap-4 md:grid-cols-4"><input name="productId" required placeholder="Product ID" className="rounded-xl border px-4 py-3"/><input name="productName" required placeholder="Product Name" className="rounded-xl border px-4 py-3"/><input name="qty" type="number" defaultValue="1" className="rounded-xl border px-4 py-3"/><input name="unitPrice" type="number" placeholder="Unit Price" className="rounded-xl border px-4 py-3"/></div><div className="grid gap-4 md:grid-cols-4"><input name="paymentMethod" placeholder="Payment Method" className="rounded-xl border px-4 py-3"/><input name="deliveryFee" type="number" placeholder="Delivery Fee" className="rounded-xl border px-4 py-3"/><input name="discount" type="number" placeholder="Discount" className="rounded-xl border px-4 py-3"/><input name="partnerId" placeholder="Partner ID" className="rounded-xl border px-4 py-3"/></div><button className="rounded-xl bg-blue-950 px-6 py-3 font-semibold text-white">Create Order</button>{msg&&<p className="font-semibold">{msg}</p>}<div className="mt-6 rounded-2xl border bg-white p-6">
         <h2 className="text-xl font-black">Documents</h2>
         <form onSubmit={async e => { e.preventDefault(); const f = new FormData(e.currentTarget); const r = await erpPost({ action: "generateAllOrderDocuments", orderId: f.get("orderId"), shopId: CONFIG.defaultShopId }); alert(r.message || "Done"); }} className="mt-4 flex gap-3">
           <input name="orderId" placeholder="Order ID" className="flex-1 rounded-xl border px-4 py-3" />
