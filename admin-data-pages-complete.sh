@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+set -e
+
+cat > src/components/tables/DataTable.tsx << 'TSX'
 "use client";
 
 import { useMemo, useState } from "react";
@@ -117,3 +121,74 @@ export default function DataTable({
     </section>
   );
 }
+TSX
+
+python3 << 'PY'
+from pathlib import Path
+
+pages = {
+  "documents": ("documents", "Documents", "Invoices, receipts, delivery slips and generated records."),
+  "notifications": ("notifications", "Notifications", "System alerts, order updates and business notifications."),
+  "activity-logs": ("activityLogs", "Activity Logs", "Operational activity history across the ERP."),
+  "audit-logs": ("auditLogs", "Audit Logs", "Security and critical system audit trail."),
+  "coupons": ("coupons", "Coupons", "Discount codes, campaigns and promotion records."),
+  "reviews": ("reviews", "Reviews", "Customer product reviews and moderation records."),
+  "analytics": ("dashboard", "Analytics", "Business intelligence and performance summary."),
+}
+
+for folder, (action, title, desc) in pages.items():
+    p = Path(f"src/app/admin/{folder}/page.tsx")
+    p.write_text(f'''"use client";
+
+import AdminLayout from "@/components/layout/AdminLayout";
+import DataTable, {{ type TableRow }} from "@/components/tables/DataTable";
+import {{ erpGet }} from "@/lib/api";
+import {{ CONFIG }} from "@/lib/config";
+import {{ useEffect, useState }} from "react";
+
+export default function Page() {{
+  const [rows, setRows] = useState<TableRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {{
+    erpGet("{action}", {{ shopId: CONFIG.defaultShopId }}).then((res) => {{
+      const firstArray = Object.values(res).find((v) => Array.isArray(v)) as TableRow[] | undefined;
+      if (firstArray) setRows(firstArray);
+      else if (res.dashboard) setRows([res.dashboard as TableRow]);
+      else setRows([]);
+      setLoading(false);
+    }});
+  }}, []);
+
+  return (
+    <AdminLayout>
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-black uppercase tracking-[0.25em] text-blue-900">Admin Module</p>
+          <h1 className="mt-2 text-4xl font-black">{title}</h1>
+          <p className="mt-2 text-slate-500">{desc}</p>
+        </div>
+
+        <button
+          onClick={{() => window.location.reload()}}
+          className="rounded-full bg-blue-950 px-6 py-3 font-black text-white"
+        >
+          Refresh
+        </button>
+      </div>
+
+      {{loading ? (
+        <div className="rounded-[2rem] border bg-white p-10 text-center font-bold text-slate-500">
+          Loading {title.lower()}...
+        </div>
+      ) : (
+        <DataTable title="{title}" rows={{rows}} />
+      )}}
+    </AdminLayout>
+  );
+}}
+''')
+PY
+
+npm run build
+./test-pages.sh

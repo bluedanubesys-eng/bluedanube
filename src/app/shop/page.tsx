@@ -1,5 +1,6 @@
 "use client";
 
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import MarketplaceHeader from "@/components/layout/MarketplaceHeader";
 import ProductCard from "@/components/marketplace/ProductCard";
 import { erpGet } from "@/lib/api";
@@ -44,7 +45,7 @@ export default function ShopPage() {
   const current = filtered.slice((page - 1) * perPage, page * perPage);
 
   return (
-    <main className="min-h-screen bg-[#f5f6f8] text-slate-950">
+    <main className="min-h-screen pb-16 md:pb-0 bg-[#f5f6f8] text-slate-950">
       <MarketplaceHeader />
 
       <section className="mx-auto max-w-7xl px-4 py-8">
@@ -162,6 +163,7 @@ export default function ShopPage() {
           </div>
         </div>
       </section>
+    <MobileBottomNav />
     </main>
   );
 }

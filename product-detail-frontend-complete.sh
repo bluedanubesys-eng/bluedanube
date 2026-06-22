@@ -1,6 +1,9 @@
+#!/usr/bin/env bash
+set -e
+
+cat > src/app/shop/[id]/page.tsx << 'TSX'
 "use client";
 
-import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { addToCart } from "@/services/cart.service";
 import { erpPost } from "@/lib/api";
 import { CONFIG } from "@/lib/config";
@@ -72,12 +75,11 @@ export default function ProductDetailPage() {
 
   if (!product) {
     return (
-      <main className="min-h-screen pb-16 md:pb-0 bg-[#f5f6f8] p-8">
+      <main className="min-h-screen bg-[#f5f6f8] p-8">
         <div className="mx-auto max-w-7xl rounded-[2rem] bg-white p-8 font-black shadow-sm">
           Loading product...
         </div>
-      <MobileBottomNav />
-    </main>
+      </main>
     );
   }
 
@@ -86,7 +88,7 @@ export default function ProductDetailPage() {
   const stock = Number(product["Stock Qty"] || 0);
 
   return (
-    <main className="min-h-screen pb-16 md:pb-0 bg-[#f5f6f8] text-slate-950">
+    <main className="min-h-screen bg-[#f5f6f8] text-slate-950">
       <header className="bg-[#071b46] text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <a href="/shop" className="text-2xl font-black">Blue Danube</a>
@@ -249,7 +251,10 @@ export default function ProductDetailPage() {
           </div>
         </div>
       </section>
-    <MobileBottomNav />
     </main>
   );
 }
+TSX
+
+npm run build
+./test-pages.sh

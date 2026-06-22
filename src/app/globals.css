@@ -115,3 +115,79 @@ textarea::placeholder {
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.05);
 }
 
+
+/* Final Blue Danube Commercial Polish */
+* {
+  scroll-behavior: smooth;
+}
+
+main {
+  background-color: #f5f6f8;
+}
+
+a {
+  transition: 0.2s ease;
+}
+
+button {
+  transition: 0.2s ease;
+}
+
+button:hover,
+a:hover {
+  transform: translateY(-1px);
+}
+
+input,
+select,
+textarea {
+  outline: none;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #0f172a;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #0b255c;
+  box-shadow: 0 0 0 3px rgba(11, 37, 92, 0.12);
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+thead {
+  background: #f1f5f9;
+}
+
+tbody tr:hover {
+  background: #f8fafc;
+}
+
+.rounded-\[2rem\],
+.rounded-3xl {
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.05);
+}
+
+@media (max-width: 768px) {
+  h1 {
+    font-size: 2rem !important;
+    line-height: 1.15 !important;
+  }
+
+  h2 {
+    font-size: 1.5rem !important;
+  }
+
+  section {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .grid {
+    gap: 1rem;
+  }
+}

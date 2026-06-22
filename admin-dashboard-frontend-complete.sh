@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+set -e
+
+cat > src/app/admin/dashboard/page.tsx << 'TSX'
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
@@ -157,3 +161,7 @@ export default function DashboardPage() {
     </AdminLayout>
   );
 }
+TSX
+
+npm run build
+./test-pages.sh

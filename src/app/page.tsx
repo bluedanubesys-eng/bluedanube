@@ -1,3 +1,4 @@
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import MarketplaceHeader from "@/components/layout/MarketplaceHeader";
 
 const categories = [
@@ -9,7 +10,7 @@ const categories = [
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-[#f5f6f8] text-slate-950">
+    <main className="min-h-screen pb-16 md:pb-0 bg-[#f5f6f8] text-slate-950">
       <MarketplaceHeader />
 
       <section className="mx-auto max-w-7xl px-4 py-8">
@@ -87,6 +88,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+    <MobileBottomNav />
     </main>
   );
 }

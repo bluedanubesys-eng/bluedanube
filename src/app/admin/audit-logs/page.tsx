@@ -1,35 +1,49 @@
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
+import DataTable, { type TableRow } from "@/components/tables/DataTable";
 import { erpGet } from "@/lib/api";
 import { CONFIG } from "@/lib/config";
 import { useEffect, useState } from "react";
 
 export default function Page() {
-  const [rows, setRows] = useState<any[]>([]);
+  const [rows, setRows] = useState<TableRow[]>([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const actionMap: any = {
-      "documents": "documents",
-      "notifications": "notifications",
-      "activity-logs": "activityLogs",
-      "audit-logs": "auditLogs",
-      "analytics": "dashboard",
-      "coupons": "coupons",
-      "reviews": "reviews"
-    };
-    erpGet(actionMap["audit-logs"] || "audit-logs", { shopId: CONFIG.defaultShopId }).then((res) => {
-      const firstArray = Object.values(res).find((v) => Array.isArray(v)) as any[];
-      setRows(firstArray || []);
+    erpGet("auditLogs", { shopId: CONFIG.defaultShopId }).then((res) => {
+      const firstArray = Object.values(res).find((v) => Array.isArray(v)) as TableRow[] | undefined;
+      if (firstArray) setRows(firstArray);
+      else if (res.dashboard) setRows([res.dashboard as TableRow]);
+      else setRows([]);
+      setLoading(false);
     });
   }, []);
 
   return (
     <AdminLayout>
-      <h1 className="text-3xl font-black capitalize">audit-logs</h1>
-      <div className="mt-8 overflow-auto rounded-3xl border bg-white p-6 shadow-sm">
-        <pre className="text-sm">{JSON.stringify(rows, null, 2)}</pre>
+      <div className="mb-8 flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-black uppercase tracking-[0.25em] text-blue-900">Admin Module</p>
+          <h1 className="mt-2 text-4xl font-black">Audit Logs</h1>
+          <p className="mt-2 text-slate-500">Security and critical system audit trail.</p>
+        </div>
+
+        <button
+          onClick={() => window.location.reload()}
+          className="rounded-full bg-blue-950 px-6 py-3 font-black text-white"
+        >
+          Refresh
+        </button>
       </div>
+
+      {loading ? (
+        <div className="rounded-[2rem] border bg-white p-10 text-center font-bold text-slate-500">
+          Loading audit logs...
+        </div>
+      ) : (
+        <DataTable title="Audit Logs" rows={rows} />
+      )}
     </AdminLayout>
   );
 }

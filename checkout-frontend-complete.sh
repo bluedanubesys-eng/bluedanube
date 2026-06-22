@@ -1,6 +1,9 @@
+#!/usr/bin/env bash
+set -e
+
+cat > src/app/checkout/page.tsx << 'TSX'
 "use client";
 
-import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { erpPost } from "@/lib/api";
 import { CONFIG } from "@/lib/config";
 import { fileToBase64 } from "@/lib/file";
@@ -86,7 +89,7 @@ export default function CheckoutPage() {
   }
 
   return (
-    <main className="min-h-screen pb-16 md:pb-0 bg-[#f5f6f8] text-slate-950">
+    <main className="min-h-screen bg-[#f5f6f8] text-slate-950">
       <header className="bg-[#071b46] text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <a href="/shop" className="text-2xl font-black">Blue Danube Checkout</a>
@@ -244,7 +247,10 @@ export default function CheckoutPage() {
           </div>
         )}
       </section>
-    <MobileBottomNav />
     </main>
   );
 }
+TSX
+
+npm run build
+./test-pages.sh

@@ -1,5 +1,6 @@
 "use client";
 
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { erpGet } from "@/lib/api";
 import { CONFIG } from "@/lib/config";
 import { useState } from "react";
@@ -49,7 +50,7 @@ export default function PartnerDashboardPage() {
   const headers = commissions[0] ? Object.keys(commissions[0]).slice(0, 8) : [];
 
   return (
-    <main className="min-h-screen bg-[#f5f6f8] text-slate-950">
+    <main className="min-h-screen pb-16 md:pb-0 bg-[#f5f6f8] text-slate-950">
       <header className="bg-[#071b46] text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <a href="/" className="text-2xl font-black">Blue Danube Partner</a>
@@ -169,6 +170,7 @@ export default function PartnerDashboardPage() {
           </>
         )}
       </section>
+    <MobileBottomNav />
     </main>
   );
 }

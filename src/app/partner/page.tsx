@@ -1,6 +1,7 @@
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 export default function PartnerPage() {
   return (
-    <main className="min-h-screen bg-[#f5f6f8] text-slate-950">
+    <main className="min-h-screen pb-16 md:pb-0 bg-[#f5f6f8] text-slate-950">
       <header className="bg-[#071b46] text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5">
           <a href="/" className="text-2xl font-black">Blue Danube</a>
@@ -114,6 +115,7 @@ export default function PartnerPage() {
           </form>
         </div>
       </section>
+    <MobileBottomNav />
     </main>
   );
 }

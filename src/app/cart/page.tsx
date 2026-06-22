@@ -1,5 +1,6 @@
 "use client";
 
+import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { cartTotal, getCart, updateQty } from "@/services/cart.service";
 import { getProductImage } from "@/services/product.service";
 import type { CartItem } from "@/types/cart";
@@ -21,7 +22,7 @@ export default function CartPage() {
   const total = cartTotal(items);
 
   return (
-    <main className="min-h-screen bg-slate-100">
+    <main className="min-h-screen pb-16 md:pb-0 bg-slate-100">
       <header className="bg-blue-950 text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
           <a href="/shop" className="text-2xl font-black">Blue Danube</a>
@@ -87,6 +88,7 @@ export default function CartPage() {
           )}
         </div>
       </section>
+    <MobileBottomNav />
     </main>
   );
 }
