@@ -19,7 +19,7 @@ export default function HomePage() {
               Blue Danube Marketplace
             </p>
             <h1 className="mt-8 max-w-3xl text-5xl font-black leading-tight md:text-6xl">
-              European premium products for Myanmar customers.
+              European premium products for International customers.
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-blue-100">
               Curated fashion, bags, shoes, accessories and lifestyle products with local order support.
