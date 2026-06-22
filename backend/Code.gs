@@ -90,6 +90,7 @@ function doPost(e) {
     if (action === "createOrder") return createOrder(data);
     if (action === "verifyPayment") return verifyPayment(data);
     if (action === "updateOrderStatus") return updateOrderStatus(data);
+    if (action === "adminUpdateOrderStatus") return adminUpdateOrderStatus(data);
     if (action === "createExpense") return createExpense(data);
     if (action === "createRefund") return createRefund(data);
     if (action === "approveRefund") return approveRefund(data);
@@ -363,7 +364,8 @@ function createOrder(data) {
     createPartnerCommission(shopId, partner, orderId, grandTotal, commissionAmount);
   }
 
-  sendOrderInvoiceEmail(data.email || "", orderId);
+  sendAdminNewOrderEmail(orderId);
+  sendCustomerOrderReceivedEmail(orderId);
   logActivity(shopId, "System", "createOrder", orderId);
 
   return json({ success: true, orderId, grandTotal, commissionAmount, profit });
@@ -2004,4 +2006,114 @@ function verifyCustomerCheckoutOtp(data) {
   }
 
   return json({ success: false, message: "Invalid OTP" });
+}
+
+
+/* ======================================================
+   ADMIN ORDER APPROVAL + CUSTOMER EMAIL WORKFLOW
+====================================================== */
+
+function adminUpdateOrderStatus(data) {
+  const orderId = data.orderId;
+  const status = data.status;
+  const note = data.note || "";
+
+  if (!orderId || !status) {
+    return json({ success: false, message: "Order ID and status required" });
+  }
+
+  const order = findRowObject(SHEETS.orders, "Order ID", orderId);
+  if (!order) return json({ success: false, message: "Order not found" });
+
+  updateOrderField(orderId, "Order Status", status);
+
+  if (status === "Approved") updateOrderField(orderId, "Payment Status", "Pending Verification");
+  if (status === "Payment Verified") updateOrderField(orderId, "Payment Status", "Paid");
+  if (status === "Cancelled") updateOrderField(orderId, "Payment Status", "Cancelled");
+
+  sendCustomerOrderStatusAutoEmail(orderId, status, note);
+  logActivity(order["Shop ID"], "Admin", "adminUpdateOrderStatus", orderId + " -> " + status);
+
+  return json({ success: true, orderId: orderId, status: status });
+}
+
+function sendAdminNewOrderEmail(orderId) {
+  const order = findRowObject(SHEETS.orders, "Order ID", orderId);
+  if (!order) return;
+
+  const items = getSheetDataArray(SHEETS.orderItems).filter(function(i) {
+    return String(i["Order ID"]) === String(orderId);
+  });
+
+  let itemRows = "";
+  items.forEach(function(item) {
+    itemRows +=
+      "<tr>" +
+      "<td style='padding:8px;border:1px solid #ddd;'>" + esc(item["Product Name"]) + "</td>" +
+      "<td style='padding:8px;border:1px solid #ddd;'>" + esc(item.Qty) + "</td>" +
+      "<td style='padding:8px;border:1px solid #ddd;'>" + esc(item["Line Total"]) + " MMK</td>" +
+      "</tr>";
+  });
+
+  const html =
+    "<h2>New Blue Danube Order</h2>" +
+    "<p>A customer has submitted a new order. Please review and approve it in Admin Orders.</p>" +
+    "<p><b>Order ID:</b> " + esc(orderId) + "</p>" +
+    "<p><b>Customer:</b> " + esc(order["Customer Name"]) + "</p>" +
+    "<p><b>Phone:</b> " + esc(order.Phone) + "</p>" +
+    "<p><b>Email:</b> " + esc(resolveOrderEmail(order, "")) + "</p>" +
+    "<p><b>Address:</b> " + esc(order.Address) + "</p>" +
+    "<p><b>Grand Total:</b> " + esc(order["Grand Total"]) + " MMK</p>" +
+    "<table style='border-collapse:collapse;width:100%;margin-top:16px;'>" +
+    "<thead><tr><th style='padding:8px;border:1px solid #ddd;'>Product</th><th style='padding:8px;border:1px solid #ddd;'>Qty</th><th style='padding:8px;border:1px solid #ddd;'>Total</th></tr></thead>" +
+    "<tbody>" + itemRows + "</tbody></table>";
+
+  sendEmailLogged(order["Shop ID"], ADMIN_EMAIL, "New Order Approval Required - " + orderId, "admin-new-order", html);
+}
+
+function sendCustomerOrderReceivedEmail(orderId) {
+  const order = findRowObject(SHEETS.orders, "Order ID", orderId);
+  if (!order) return;
+
+  const email = resolveOrderEmail(order, "");
+  if (!email) return;
+
+  const html =
+    "<h2>Order Received</h2>" +
+    "<p>Dear " + esc(order["Customer Name"]) + ",</p>" +
+    "<p>We have received your order. Our team will review and confirm it soon.</p>" +
+    "<p><b>Order ID:</b> " + esc(orderId) + "</p>" +
+    "<p><b>Status:</b> Pending Review</p>" +
+    "<p><b>Total:</b> " + esc(order["Grand Total"]) + " MMK</p>";
+
+  sendEmailLogged(order["Shop ID"], email, "Order Received - " + orderId, "customer-order-received", html);
+}
+
+function sendCustomerOrderStatusAutoEmail(orderId, status, note) {
+  const order = findRowObject(SHEETS.orders, "Order ID", orderId);
+  if (!order) return;
+
+  const email = resolveOrderEmail(order, "");
+  if (!email) return;
+
+  const messages = {
+    "Approved": "Your order has been approved and is now being processed.",
+    "Payment Verified": "Your payment has been verified successfully.",
+    "Packaging": "Your order is now being packed.",
+    "Shipped": "Your order has been shipped.",
+    "Out for Delivery": "Your order is out for delivery.",
+    "Delivered": "Your order has been delivered successfully. Thank you for shopping with Blue Danube.",
+    "Cancelled": "Your order has been cancelled. Please contact support if you have questions."
+  };
+
+  const html =
+    "<h2>Order Status Update</h2>" +
+    "<p>Dear " + esc(order["Customer Name"]) + ",</p>" +
+    "<p>" + esc(messages[status] || "Your order status has been updated.") + "</p>" +
+    "<p><b>Order ID:</b> " + esc(orderId) + "</p>" +
+    "<p><b>Current Status:</b> " + esc(status) + "</p>" +
+    "<p><b>Total:</b> " + esc(order["Grand Total"]) + " MMK</p>" +
+    (note ? "<p><b>Note:</b> " + esc(note) + "</p>" : "");
+
+  sendEmailLogged(order["Shop ID"], email, "Order Update - " + orderId + " - " + status, "customer-order-status", html);
 }

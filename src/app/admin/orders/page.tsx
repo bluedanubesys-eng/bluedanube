@@ -1,44 +1,184 @@
 "use client";
+
 import AdminLayout from "@/components/layout/AdminLayout";
-import { erpPost } from "@/lib/api";
+import { erpGet, erpPost } from "@/lib/api";
 import { CONFIG } from "@/lib/config";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function OrdersPage(){const[msg,setMsg]=useState("");async function submit(e:React.FormEvent<HTMLFormElement>){e.preventDefault();const f=new FormData(e.currentTarget);const r=await erpPost({action:"createOrder",shopId:CONFIG.defaultShopId,customerName:f.get("customerName"),phone:f.get("phone"),email:f.get("email"),address:f.get("address"),township:f.get("township"),paymentMethod:f.get("paymentMethod"),deliveryFee:Number(f.get("deliveryFee")||0),discount:Number(f.get("discount")||0),partnerId:f.get("partnerId"),items:[{productId:f.get("productId"),productName:f.get("productName"),qty:Number(f.get("qty")||1),unitPrice:Number(f.get("unitPrice")||0)}]});setMsg(r.success?`Order ${r.orderId} Total ${r.grandTotal} MMK`:r.message)}
-return <AdminLayout><h1 className="text-3xl font-bold">Orders</h1>
+type OrderRow = Record<string, string | number | boolean | null | undefined>;
 
-<div className="mt-6 rounded-3xl border bg-white p-6 shadow-sm">
-  <h2 className="text-xl font-black">Email PDF Documents</h2>
-  <p className="mt-2 text-sm text-slate-500">
-    Send invoice, receipt, and delivery slip PDF attachments to customer Gmail.
-  </p>
+const statuses = [
+  "Approved",
+  "Payment Verified",
+  "Packaging",
+  "Shipped",
+  "Out for Delivery",
+  "Delivered",
+  "Cancelled",
+];
 
-  <form
-    onSubmit={async e => {
-      e.preventDefault();
-      const f = new FormData(e.currentTarget);
-      const r = await erpPost({
-        action: "sendOrderDocumentsEmail",
-        shopId: CONFIG.defaultShopId,
-        orderId: f.get("orderId"),
-        email: f.get("email"),
-        types: ["invoice", "receipt", "delivery"]
-      });
-      alert(r.success ? "PDF documents sent to customer Gmail." : r.message);
-    }}
-    className="mt-4 grid gap-3 md:grid-cols-[1fr_1fr_auto]"
-  >
-    <input name="orderId" required placeholder="Order ID" className="rounded-xl border px-4 py-3" />
-    <input name="email" type="email" placeholder="Customer Gmail optional" className="rounded-xl border px-4 py-3" />
-    <button className="rounded-xl bg-blue-950 px-5 py-3 font-black text-white">
-      Send PDFs by Email
-    </button>
-  </form>
-</div><div className="mt-6 rounded-3xl border bg-white p-6 shadow-sm"><h2 className="text-xl font-black">PDF Documents</h2><form onSubmit={async e=>{e.preventDefault();const f=new FormData(e.currentTarget);const orderId=f.get("orderId"); await erpPost({action:"generateInvoicePdf",orderId}); await erpPost({action:"generateReceiptPdf",orderId}); await erpPost({action:"generateDeliverySlipPdf",orderId}); alert("PDF documents generated. Check Documents sheet.");}} className="mt-4 flex gap-3"><input name="orderId" placeholder="Order ID" className="flex-1 rounded-xl border px-4 py-3"/><button className="rounded-xl bg-blue-950 px-5 py-3 font-black text-white">Generate Invoice / Receipt / Delivery Slip</button></form></div><form onSubmit={submit} className="mt-8 grid max-w-5xl gap-4 rounded-2xl border bg-white p-6"><input name="customerName" required placeholder="Customer Name" className="rounded-xl border px-4 py-3"/><input name="phone" placeholder="Phone" className="rounded-xl border px-4 py-3"/><input name="email" placeholder="Email" className="rounded-xl border px-4 py-3"/><input name="address" placeholder="Address" className="rounded-xl border px-4 py-3"/><input name="township" placeholder="Township" className="rounded-xl border px-4 py-3"/><div className="grid gap-4 md:grid-cols-4"><input name="productId" required placeholder="Product ID" className="rounded-xl border px-4 py-3"/><input name="productName" required placeholder="Product Name" className="rounded-xl border px-4 py-3"/><input name="qty" type="number" defaultValue="1" className="rounded-xl border px-4 py-3"/><input name="unitPrice" type="number" placeholder="Unit Price" className="rounded-xl border px-4 py-3"/></div><div className="grid gap-4 md:grid-cols-4"><input name="paymentMethod" placeholder="Payment Method" className="rounded-xl border px-4 py-3"/><input name="deliveryFee" type="number" placeholder="Delivery Fee" className="rounded-xl border px-4 py-3"/><input name="discount" type="number" placeholder="Discount" className="rounded-xl border px-4 py-3"/><input name="partnerId" placeholder="Partner ID" className="rounded-xl border px-4 py-3"/></div><button className="rounded-xl bg-blue-950 px-6 py-3 font-semibold text-white">Create Order</button>{msg&&<p className="font-semibold">{msg}</p>}<div className="mt-6 rounded-2xl border bg-white p-6">
-        <h2 className="text-xl font-black">Documents</h2>
-        <form onSubmit={async e => { e.preventDefault(); const f = new FormData(e.currentTarget); const r = await erpPost({ action: "generateAllOrderDocuments", orderId: f.get("orderId"), shopId: CONFIG.defaultShopId }); alert(r.message || "Done"); }} className="mt-4 flex gap-3">
-          <input name="orderId" placeholder="Order ID" className="flex-1 rounded-xl border px-4 py-3" />
-          <button className="rounded-xl bg-blue-950 px-6 py-3 font-black text-white">Generate PDFs</button>
-        </form>
+export default function OrdersPage() {
+  const [orders, setOrders] = useState<OrderRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [q, setQ] = useState("");
+
+  async function loadOrders() {
+    setLoading(true);
+    const res = await erpGet("orders", { shopId: CONFIG.defaultShopId });
+    setOrders((res.orders || []) as OrderRow[]);
+    setLoading(false);
+  }
+
+  useEffect(() => {
+    loadOrders();
+  }, []);
+
+  const filtered = orders.filter((o) =>
+    JSON.stringify(o).toLowerCase().includes(q.toLowerCase())
+  );
+
+  async function updateStatus(orderId: string, status: string) {
+    if (!orderId) return alert("Order ID missing");
+
+    const r = await erpPost({
+      action: "adminUpdateOrderStatus",
+      shopId: CONFIG.defaultShopId,
+      orderId,
+      status,
+    });
+
+    alert(r.success ? `Order ${status}. Customer email sent.` : r.message);
+    if (r.success) loadOrders();
+  }
+
+  async function sendDocs(orderId: string, email?: string) {
+    const r = await erpPost({
+      action: "sendOrderDocumentsEmail",
+      shopId: CONFIG.defaultShopId,
+      orderId,
+      email: email || "",
+      types: ["invoice", "receipt", "delivery"],
+    });
+
+    alert(r.success ? "PDF documents sent to customer Gmail." : r.message);
+  }
+
+  return (
+    <AdminLayout>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-sm font-black uppercase tracking-[0.25em] text-blue-900">
+            Order Management
+          </p>
+          <h1 className="mt-2 text-4xl font-black">Orders</h1>
+          <p className="mt-2 text-slate-500">
+            Approve, process, ship, deliver, cancel, and email customers automatically.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          onClick={loadOrders}
+          className="rounded-full bg-blue-950 px-6 py-3 font-black text-white"
+        >
+          Refresh
+        </button>
       </div>
-      </form></AdminLayout>}
+
+      <div className="mt-6 rounded-3xl border bg-white p-5 shadow-sm">
+        <input
+          value={q}
+          onChange={(e) => setQ(e.target.value)}
+          placeholder="Search orders..."
+          className="w-full rounded-xl border px-4 py-3"
+        />
+      </div>
+
+      {loading ? (
+        <div className="mt-8 rounded-3xl border bg-white p-10 text-center font-bold text-slate-500">
+          Loading orders...
+        </div>
+      ) : !filtered.length ? (
+        <div className="mt-8 rounded-3xl border bg-white p-10 text-center">
+          <h2 className="text-2xl font-black">No orders found</h2>
+          <p className="mt-2 text-slate-500">Customer orders will appear here automatically.</p>
+        </div>
+      ) : (
+        <div className="mt-8 space-y-5">
+          {filtered.map((o) => {
+            const orderId = String(o["Order ID"] || "");
+            const email = String(o.Email || o.email || "");
+            const status = String(o["Order Status"] || "Pending");
+
+            return (
+              <article key={orderId} className="rounded-3xl border bg-white p-6 shadow-sm">
+                <div className="flex flex-wrap items-start justify-between gap-4">
+                  <div>
+                    <p className="text-sm font-bold text-slate-500">Order ID</p>
+                    <h2 className="text-2xl font-black">{orderId}</h2>
+                    <p className="mt-2 text-slate-600">
+                      {String(o["Customer Name"] || "-")} • {String(o.Phone || "-")} • {email || "No email"}
+                    </p>
+                    <p className="mt-1 text-slate-600">
+                      {String(o.Address || "-")} {String(o.Township || "")}
+                    </p>
+                  </div>
+
+                  <div className="text-right">
+                    <span className="rounded-full bg-blue-50 px-4 py-2 text-sm font-black text-blue-950">
+                      {status}
+                    </span>
+                    <p className="mt-3 text-2xl font-black">
+                      {Number(o["Grand Total"] || 0).toLocaleString()} MMK
+                    </p>
+                    <p className="text-sm text-slate-500">
+                      Payment: {String(o["Payment Status"] || "-")}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 grid gap-3 md:grid-cols-7">
+                  {statuses.map((s) => (
+                    <button
+                      key={s}
+                      type="button"
+                      onClick={() => updateStatus(orderId, s)}
+                      className={`rounded-xl px-3 py-3 text-xs font-black text-white ${
+                        s === "Cancelled" ? "bg-red-600" : "bg-blue-950"
+                      }`}
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+
+                <div className="mt-4 flex flex-wrap gap-3 border-t pt-4">
+                  <button
+                    type="button"
+                    onClick={() => sendDocs(orderId, email)}
+                    className="rounded-xl border px-5 py-3 font-black"
+                  >
+                    Send Invoice / Receipt / Delivery PDFs
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await erpPost({ action: "generateInvoicePdf", shopId: CONFIG.defaultShopId, orderId });
+                      await erpPost({ action: "generateReceiptPdf", shopId: CONFIG.defaultShopId, orderId });
+                      await erpPost({ action: "generateDeliverySlipPdf", shopId: CONFIG.defaultShopId, orderId });
+                      alert("PDF documents generated.");
+                    }}
+                    className="rounded-xl border px-5 py-3 font-black"
+                  >
+                    Generate PDFs Only
+                  </button>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </AdminLayout>
+  );
+}
