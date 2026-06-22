@@ -1,3 +1,22 @@
+#!/usr/bin/env bash
+set -e
+
+mkdir -p src/lib
+
+cat > src/lib/file.ts << 'TS'
+export function fileToBase64(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => resolve(String(reader.result));
+    reader.onerror = reject;
+
+    reader.readAsDataURL(file);
+  });
+}
+TS
+
+cat > src/app/admin/products/page.tsx << 'TSX'
 "use client";
 
 import AdminLayout from "@/components/layout/AdminLayout";
@@ -5,7 +24,6 @@ import { erpPost } from "@/lib/api";
 import { CONFIG } from "@/lib/config";
 import { fileToBase64 } from "@/lib/file";
 import { useState } from "react";
-import ProductTable from "@/components/tables/ProductTable";
 
 export default function ProductsPage() {
   const [msg, setMsg] = useState("");
@@ -194,7 +212,10 @@ export default function ProductsPage() {
           </div>
         </div>
       </form>
-    <ProductTable />
     </AdminLayout>
   );
 }
+TSX
+
+echo "✅ Professional product image upload UI added"
+npm run dev

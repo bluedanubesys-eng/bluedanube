@@ -1,0 +1,23 @@
+export type Product = {
+  "Created At"?: string;
+  "Shop ID"?: string;
+  "Product ID"?: string;
+  "Product Name"?: string;
+  Brand?: string;
+  Category?: string;
+  Description?: string;
+  SKU?: string;
+  Barcode?: string;
+  "Image URL"?: string;
+  Size?: string;
+  Color?: string;
+  "Cost Price"?: number;
+  "Import Cost"?: number;
+  "Total Cost"?: number;
+  "Selling Price"?: number;
+  "Stock Qty"?: number;
+  "Reorder Level"?: number;
+  "Owner Type"?: string;
+  "Partner ID"?: string;
+  Status?: string;
+};

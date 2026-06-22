@@ -121,6 +121,10 @@ function doPost(e) {
     if (action === "getProfitLossReport") return getProfitLossReport(data);
     if (action === "getInventoryValuationReport") return getInventoryValuationReport(data);
     if (action === "getPartnerPerformanceReport") return getPartnerPerformanceReport(data);
+    if (action === "getBalanceSheet") return getBalanceSheet(data);
+    if (action === "getCashFlowReport") return getCashFlowReport(data);
+    if (action === "getPartnerSettlementReport") return getPartnerSettlementReport(data);
+    if (action === "getImportCostAnalysis") return getImportCostAnalysis(data);
 
     return json({ success: false, message: "Invalid POST action" });
   } catch (err) {
@@ -1396,4 +1400,157 @@ function findUserByEmail(email) {
   return users.find(function(u) {
     return String(u.Email || "").trim().toLowerCase() === target;
   }) || null;
+}
+
+
+/* ======================================================
+   ADVANCED FINANCE REPORTS
+====================================================== */
+
+function getBalanceSheet(data) {
+  const shopId = data.shopId || DEFAULT_SHOP_ID;
+
+  const products = getSheetDataArray(SHEETS.products).filter(r => String(r["Shop ID"]) === String(shopId));
+  const payments = getSheetDataArray(SHEETS.payments).filter(r => String(r["Shop ID"]) === String(shopId));
+  const expenses = getSheetDataArray(SHEETS.expenses).filter(r => String(r["Shop ID"]) === String(shopId));
+  const commissions = getSheetDataArray(SHEETS.partnerCommissions).filter(r => String(r["Shop ID"]) === String(shopId));
+
+  const cash = payments.reduce((s, r) => s + Number(r.Amount || 0), 0) -
+               expenses.reduce((s, r) => s + Number(r.Amount || 0), 0);
+
+  const inventoryValue = products.reduce((s, r) => {
+    return s + Number(r["Total Cost"] || 0) * Number(r["Stock Qty"] || 0);
+  }, 0);
+
+  const unpaidCommission = commissions
+    .filter(r => String(r.Status).toLowerCase() !== "paid")
+    .reduce((s, r) => s + Number(r["Commission Amount"] || 0), 0);
+
+  const assets = cash + inventoryValue;
+  const liabilities = unpaidCommission;
+  const equity = assets - liabilities;
+
+  return json({
+    success: true,
+    report: {
+      assets: {
+        cash,
+        inventoryValue,
+        totalAssets: assets
+      },
+      liabilities: {
+        unpaidPartnerCommission: unpaidCommission,
+        totalLiabilities: liabilities
+      },
+      equity
+    }
+  });
+}
+
+function getCashFlowReport(data) {
+  const shopId = data.shopId || DEFAULT_SHOP_ID;
+
+  const payments = getSheetDataArray(SHEETS.payments).filter(r => String(r["Shop ID"]) === String(shopId));
+  const expenses = getSheetDataArray(SHEETS.expenses).filter(r => String(r["Shop ID"]) === String(shopId));
+  const commissions = getSheetDataArray(SHEETS.partnerCommissions).filter(r => String(r["Shop ID"]) === String(shopId));
+
+  const cashIn = payments.reduce((s, r) => s + Number(r.Amount || 0), 0);
+  const expenseOut = expenses.reduce((s, r) => s + Number(r.Amount || 0), 0);
+  const commissionOut = commissions
+    .filter(r => String(r.Status).toLowerCase() === "paid")
+    .reduce((s, r) => s + Number(r["Commission Amount"] || 0), 0);
+
+  const cashOut = expenseOut + commissionOut;
+  const netCashFlow = cashIn - cashOut;
+
+  return json({
+    success: true,
+    report: {
+      cashIn,
+      cashOut,
+      expenseOut,
+      commissionOut,
+      netCashFlow
+    }
+  });
+}
+
+function getPartnerSettlementReport(data) {
+  const shopId = data.shopId || DEFAULT_SHOP_ID;
+
+  const partners = getSheetDataArray(SHEETS.partners).filter(r => String(r["Shop ID"]) === String(shopId));
+  const commissions = getSheetDataArray(SHEETS.partnerCommissions).filter(r => String(r["Shop ID"]) === String(shopId));
+
+  const report = partners.map(function(partner) {
+    const partnerId = partner["Partner ID"];
+
+    const rows = commissions.filter(c => String(c["Partner ID"]) === String(partnerId));
+
+    const totalSales = rows.reduce((s, r) => s + Number(r["Sale Amount"] || 0), 0);
+    const totalCommission = rows.reduce((s, r) => s + Number(r["Commission Amount"] || 0), 0);
+    const paidCommission = rows
+      .filter(r => String(r.Status).toLowerCase() === "paid")
+      .reduce((s, r) => s + Number(r["Commission Amount"] || 0), 0);
+
+    const unpaidCommission = totalCommission - paidCommission;
+
+    return {
+      partnerId,
+      partnerName: partner["Partner Name"],
+      partnerType: partner["Partner Type"],
+      totalOrders: rows.length,
+      totalSales,
+      totalCommission,
+      paidCommission,
+      unpaidCommission,
+      settlementBalance: Number(partner["Settlement Balance"] || 0)
+    };
+  });
+
+  return json({ success: true, report });
+}
+
+function getImportCostAnalysis(data) {
+  const shopId = data.shopId || DEFAULT_SHOP_ID;
+
+  const products = getSheetDataArray(SHEETS.products).filter(r => String(r["Shop ID"]) === String(shopId));
+
+  const report = products.map(function(p) {
+    const costPrice = Number(p["Cost Price"] || 0);
+    const importCost = Number(p["Import Cost"] || 0);
+    const totalCost = Number(p["Total Cost"] || 0);
+    const sellingPrice = Number(p["Selling Price"] || 0);
+    const stockQty = Number(p["Stock Qty"] || 0);
+
+    const grossProfitPerUnit = sellingPrice - totalCost;
+    const marginPercent = sellingPrice > 0 ? Math.round((grossProfitPerUnit / sellingPrice) * 10000) / 100 : 0;
+
+    return {
+      productId: p["Product ID"],
+      productName: p["Product Name"],
+      brand: p.Brand,
+      costPrice,
+      importCost,
+      totalCost,
+      sellingPrice,
+      stockQty,
+      grossProfitPerUnit,
+      marginPercent,
+      totalInventoryCost: totalCost * stockQty,
+      potentialGrossProfit: grossProfitPerUnit * stockQty
+    };
+  });
+
+  const summary = report.reduce(function(s, r) {
+    s.totalImportCost += r.importCost * r.stockQty;
+    s.totalInventoryCost += r.totalInventoryCost;
+    s.potentialGrossProfit += r.potentialGrossProfit;
+    return s;
+  }, {
+    totalImportCost: 0,
+    totalInventoryCost: 0,
+    potentialGrossProfit: 0
+  });
+
+  return json({ success: true, summary, report });
 }
