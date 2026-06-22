@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { logout } from "@/services/auth.service";
+import NotificationBell from "@/components/widgets/NotificationBell";
 
 const menu = [
   ["Dashboard", "/admin/dashboard"],
@@ -63,7 +64,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         </button>
       </aside>
 
-      <section className="p-6 pt-16 lg:ml-64 lg:pt-6">{children}</section>
+      <section className="p-6 pt-16 lg:ml-64 lg:pt-6"><div className="mb-6 flex items-center justify-end gap-3"><NotificationBell /><button onClick={logout} className="rounded-full border bg-white px-4 py-2 text-sm font-black shadow-sm">Admin</button></div>{children}</section>
     </main>
   );
 }

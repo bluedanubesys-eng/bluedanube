@@ -1,9 +1,9 @@
 "use client";
 
+import MarketplaceHeader from "@/components/layout/MarketplaceHeader";
+import ProductCard from "@/components/marketplace/ProductCard";
 import { erpGet } from "@/lib/api";
 import { CONFIG } from "@/lib/config";
-import { addToCart } from "@/services/cart.service";
-import { getProductImage } from "@/services/product.service";
 import type { Product } from "@/types/product";
 import { useEffect, useMemo, useState } from "react";
 
@@ -14,7 +14,9 @@ export default function ShopPage() {
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("All");
   const [sort, setSort] = useState("popular");
+  const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
+  const perPage = 12;
 
   useEffect(() => {
     erpGet("products", { shopId: CONFIG.defaultShopId }).then((res) => {
@@ -38,76 +40,77 @@ export default function ShopPage() {
     return list;
   }, [products, query, category, sort]);
 
+  const totalPages = Math.max(Math.ceil(filtered.length / perPage), 1);
+  const current = filtered.slice((page - 1) * perPage, page * perPage);
+
   return (
     <main className="min-h-screen bg-[#f5f6f8] text-slate-950">
-      <header className="sticky top-0 z-50 bg-[#0f1f4a] text-white shadow-sm">
-        <div className="mx-auto flex max-w-7xl items-center gap-5 px-6 py-4">
-          <a href="/" className="text-2xl font-black">Blue Danube</a>
+      <MarketplaceHeader />
+
+      <section className="mx-auto max-w-7xl px-4 py-8">
+        <div className="rounded-[2rem] bg-gradient-to-br from-[#071b46] to-[#0b255c] p-8 text-white shadow-xl">
+          <p className="text-sm font-black uppercase tracking-[0.35em] text-amber-300">Blue Danube Shop</p>
+          <h1 className="mt-4 text-4xl font-black md:text-5xl">European products collection</h1>
+          <p className="mt-4 max-w-2xl text-blue-100">Browse real products from Blue Danube ERP database.</p>
+
           <input
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="hidden flex-1 rounded-full bg-white px-6 py-3 text-sm text-slate-950 outline-none md:block"
+            onChange={(e) => {
+              setQuery(e.target.value);
+              setPage(1);
+            }}
+            className="mt-6 w-full rounded-full bg-white px-6 py-4 text-slate-950 outline-none"
             placeholder="Search products, brands, categories..."
           />
-          <a href="/cart" className="rounded-full bg-white px-5 py-2 font-black text-[#0f1f4a]">Cart</a>
-        </div>
-      </header>
-
-      <nav className="border-b bg-white">
-        <div className="mx-auto flex max-w-7xl gap-3 overflow-x-auto px-6 py-4">
-          {categories.map((c) => (
-            <button
-              key={c}
-              onClick={() => setCategory(c)}
-              className={`rounded-full px-5 py-2 text-sm font-black ${category === c ? "bg-[#0f1f4a] text-white" : "bg-slate-100 text-slate-700"}`}
-            >
-              {c}
-            </button>
-          ))}
-        </div>
-      </nav>
-
-      <section className="mx-auto max-w-7xl px-6 py-8">
-        <div className="rounded-[2rem] bg-gradient-to-br from-[#0f1f4a] to-[#07122d] p-8 text-white shadow-xl">
-          <p className="text-sm font-black uppercase tracking-[0.35em] text-blue-200">Blue Danube Shop</p>
-          <h1 className="mt-4 text-4xl font-black md:text-5xl">European Products Collection</h1>
-          <p className="mt-4 max-w-2xl text-blue-100">Browse real products from the Blue Danube ERP database.</p>
-          <input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="mt-6 w-full rounded-full bg-white px-6 py-4 text-slate-950 outline-none md:hidden"
-            placeholder="Search products..."
-          />
         </div>
 
-        <div className="mt-8 grid gap-6 lg:grid-cols-[260px_1fr]">
+        <div className="mt-8 grid gap-6 lg:grid-cols-[280px_1fr]">
           <aside className="hidden h-fit rounded-[2rem] bg-white p-6 shadow-sm ring-1 ring-slate-200 lg:block">
             <h2 className="text-xl font-black">Filters</h2>
-            <div className="mt-6 space-y-5 text-sm">
-              <div>
-                <p className="font-black">Category</p>
-                <div className="mt-3 space-y-2">
-                  {categories.map((c) => (
-                    <button key={c} onClick={() => setCategory(c)} className="block text-slate-600 hover:text-blue-950">
-                      {c}
-                    </button>
-                  ))}
-                </div>
+
+            <div className="mt-6">
+              <p className="font-black">Category</p>
+              <div className="mt-3 space-y-2">
+                {categories.map((c) => (
+                  <button
+                    key={c}
+                    onClick={() => {
+                      setCategory(c);
+                      setPage(1);
+                    }}
+                    className={`block rounded-full px-4 py-2 text-sm font-bold ${
+                      category === c ? "bg-[#0b255c] text-white" : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {c}
+                  </button>
+                ))}
               </div>
-              <div>
-                <p className="font-black">Stock</p>
-                <p className="mt-2 text-slate-500">Available products only</p>
-              </div>
+            </div>
+
+            <div className="mt-7">
+              <p className="font-black">Price</p>
+              <p className="mt-2 text-sm text-slate-500">Sort by price using the dropdown.</p>
+            </div>
+
+            <div className="mt-7 rounded-2xl bg-amber-50 p-4">
+              <p className="font-black text-[#0b255c]">Local support</p>
+              <p className="mt-2 text-sm text-slate-600">Order confirmation, payment verification and delivery coordination.</p>
             </div>
           </aside>
 
           <div>
             <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
               <div>
-                <h2 className="text-2xl font-black">Recommended Products</h2>
+                <h2 className="text-2xl font-black">Recommended products</h2>
                 <p className="text-sm font-semibold text-slate-500">{filtered.length} items available</p>
               </div>
-              <select value={sort} onChange={(e) => setSort(e.target.value)} className="rounded-full border bg-white px-5 py-3 text-sm font-bold">
+
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value)}
+                className="rounded-full border bg-white px-5 py-3 text-sm font-bold"
+              >
                 <option value="popular">Sort: Popular</option>
                 <option value="low">Price: Low to High</option>
                 <option value="high">Price: High to Low</option>
@@ -115,9 +118,9 @@ export default function ShopPage() {
             </div>
 
             {loading && (
-              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-                {[1,2,3,4,5,6].map((i) => (
-                  <div key={i} className="animate-pulse rounded-[1.7rem] bg-white p-4 shadow-sm">
+              <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                {[1,2,3,4,5,6,7,8].map((i) => (
+                  <div key={i} className="animate-pulse rounded-[1.6rem] bg-white p-4 shadow-sm">
                     <div className="aspect-square rounded-2xl bg-slate-200" />
                     <div className="mt-4 h-4 w-2/3 rounded bg-slate-200" />
                     <div className="mt-3 h-4 w-1/2 rounded bg-slate-200" />
@@ -126,56 +129,36 @@ export default function ShopPage() {
               </div>
             )}
 
-            {!loading && !filtered.length && (
+            {!loading && !current.length && (
               <div className="rounded-[2rem] bg-white p-12 text-center shadow-sm ring-1 ring-slate-200">
                 <h3 className="text-2xl font-black">No products found</h3>
                 <p className="mt-2 text-slate-500">Add products from ERP admin or change your search.</p>
               </div>
             )}
 
-            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {filtered.map((p) => {
-                const img = getProductImage(p);
-                const stock = Number(p["Stock Qty"] || 0);
-
-                return (
-                  <article key={p["Product ID"]} className="group overflow-hidden rounded-[1.7rem] bg-white shadow-sm ring-1 ring-slate-200 transition hover:-translate-y-1 hover:shadow-xl">
-                    <div className="relative aspect-square bg-slate-100">
-                      {img ? (
-                        <img src={img} alt={p["Product Name"] || ""} className="h-full w-full object-cover transition duration-300 group-hover:scale-105" />
-                      ) : (
-                        <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-slate-100 to-slate-200 text-sm font-bold text-slate-400">
-                          No Image
-                        </div>
-                      )}
-                      <span className="absolute left-4 top-4 rounded-full bg-white/95 px-3 py-1 text-xs font-black text-blue-950 shadow">
-                        {p.Category || "Product"}
-                      </span>
-                    </div>
-
-                    <div className="p-5">
-                      <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-900">{p.Brand || "European Brand"}</p>
-                      <a href={`/shop/${p["Product ID"]}`}>
-                        <h3 className="mt-2 line-clamp-2 min-h-[48px] text-lg font-black hover:text-blue-900">{p["Product Name"]}</h3>
-                      </a>
-                      <div className="mt-3 flex items-center justify-between text-xs font-bold text-slate-500">
-                        <span>{p.Size || "Standard"}</span>
-                        <span>{p.Color || ""}</span>
-                      </div>
-                      <p className="mt-4 text-2xl font-black text-blue-950">{Number(p["Selling Price"] || 0).toLocaleString()} MMK</p>
-                      <p className="mt-1 text-xs font-bold text-slate-500">{stock > 0 ? `${stock} in stock` : "Out of stock"}</p>
-                      <button
-                        disabled={stock <= 0}
-                        onClick={() => addToCart(p)}
-                        className="mt-5 w-full rounded-full bg-[#0f1f4a] px-5 py-3 font-black text-white transition hover:bg-[#17306f] disabled:bg-slate-300"
-                      >
-                        {stock > 0 ? "Add to Cart" : "Out of Stock"}
-                      </button>
-                    </div>
-                  </article>
-                );
-              })}
+            <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+              {current.map((p) => <ProductCard key={p["Product ID"]} product={p} />)}
             </div>
+
+            {filtered.length > perPage && (
+              <div className="mt-8 flex items-center justify-center gap-3">
+                <button
+                  disabled={page <= 1}
+                  onClick={() => setPage(page - 1)}
+                  className="rounded-full border bg-white px-5 py-3 font-black disabled:opacity-40"
+                >
+                  Previous
+                </button>
+                <span className="font-black">Page {page} / {totalPages}</span>
+                <button
+                  disabled={page >= totalPages}
+                  onClick={() => setPage(page + 1)}
+                  className="rounded-full border bg-white px-5 py-3 font-black disabled:opacity-40"
+                >
+                  Next
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>

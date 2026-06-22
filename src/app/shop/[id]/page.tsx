@@ -26,7 +26,7 @@ export default function ProductDetailPage() {
   const img = getProductImage(product);
 
   return (
-    <main className="min-h-screen bg-slate-100">
+    <main className="min-h-screen bg-[#f5f6f8]">
       <header className="bg-[#0f1f4a] text-white">
         <div className="mx-auto flex max-w-7xl justify-between px-6 py-4">
           <a href="/shop" className="text-2xl font-black">Blue Danube</a>
@@ -42,7 +42,7 @@ export default function ProductDetailPage() {
         <div className="rounded-[2rem] bg-white p-8 shadow-sm ring-1 ring-slate-200">
           <p className="font-black uppercase tracking-[0.2em] text-blue-900">{product.Brand || "European Brand"}</p>
           <h1 className="mt-4 text-4xl font-black">{product["Product Name"]}</h1>
-          <p className="mt-4 text-slate-600">{product.Description || "Premium European product curated by Blue Danube."}</p>
+          <p className="mt-4 text-slate-600">{product.Description || "Premium European product curated by Blue Danube."}</p><p className="mt-6 text-sm font-black uppercase tracking-[0.2em] text-blue-900">Product Gallery</p><div className="mt-3 grid grid-cols-4 gap-3">{[1,2,3,4].map((i)=><div key={i} className="aspect-square rounded-2xl border bg-slate-50" />)}</div>
           <p className="mt-8 text-4xl font-black text-blue-950">{Number(product["Selling Price"] || 0).toLocaleString()} MMK</p>
 
           <div className="mt-6 grid grid-cols-2 gap-4 text-sm">
