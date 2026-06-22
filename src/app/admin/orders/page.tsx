@@ -141,14 +141,14 @@ export default function OrdersPage() {
                 <div className="mt-5 grid gap-3 md:grid-cols-7">
                   {statuses.map((s) => (
                     <button
-                      key={s}
+                      key={status === s ? `✓ ${s}` : s}
                       type="button"
                       onClick={() => updateStatus(orderId, s)}
                       className={`rounded-xl px-3 py-3 text-xs font-black text-white ${
                         s === "Cancelled" ? "bg-red-600" : "bg-blue-950"
                       }`}
                     >
-                      {s}
+                      {status === s ? `✓ ${s}` : s}
                     </button>
                   ))}
                 </div>
