@@ -173,9 +173,9 @@ function setupSheets() {
   createSheet(SHEETS.customers, ["Created At","Shop ID","Customer ID","Customer Name","Phone","Email","Address","Township","Remark","Status"]);
 
   createSheet(SHEETS.orders, [
-    "Created At","Shop ID","Order ID","Customer ID","Customer Name","Phone","Address","Township",
+    "Created At","Shop ID","Order ID","Customer ID","Customer Name","Phone","Email","Address","Township",
     "Subtotal","Discount","Delivery Fee","Tax","Grand Total","Payment Method","Payment Status",
-    "Order Status","Partner ID","Commission Amount","Blue Danube Profit","Remarks","Email"
+    "Order Status","Partner ID","Commission Amount","Blue Danube Profit","Payment Screenshot URL","Remarks"
   ]);
 
   createSheet(SHEETS.orderItems, [
@@ -349,10 +349,10 @@ function createOrder(data) {
 
   getSheet(SHEETS.orders).appendRow([
     new Date(), shopId, orderId, data.customerId || "", data.customerName,
-    data.phone || "", data.address || "", data.township || "",
+    data.phone || "", data.email || "", data.address || "", data.township || "",
     subtotal, discount, deliveryFee, tax, grandTotal,
     data.paymentMethod || "", "Unpaid", "Pending",
-    data.partnerId || "", commissionAmount, profit, data.remarks || "", data.email || ""
+    data.partnerId || "", commissionAmount, profit, data.paymentScreenshotUrl || "", data.remarks || ""
   ]);
 
   items.forEach(function(item) {
@@ -967,6 +967,7 @@ function createOrderWithPaymentScreenshot(data) {
       )
     : "";
 
+  data.paymentScreenshotUrl = screenshotUrl;
   data.remarks = (data.remarks || "") + " Payment Screenshot: " + screenshotUrl;
 
   return createOrder(data);
