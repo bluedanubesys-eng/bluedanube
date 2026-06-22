@@ -155,7 +155,9 @@ export default function ShopPage() {
 
                     <div className="p-5">
                       <p className="text-xs font-black uppercase tracking-[0.2em] text-blue-900">{p.Brand || "European Brand"}</p>
-                      <h3 className="mt-2 line-clamp-2 min-h-[48px] text-lg font-black">{p["Product Name"]}</h3>
+                      <a href={`/shop/${p["Product ID"]}`}>
+                        <h3 className="mt-2 line-clamp-2 min-h-[48px] text-lg font-black hover:text-blue-900">{p["Product Name"]}</h3>
+                      </a>
                       <div className="mt-3 flex items-center justify-between text-xs font-bold text-slate-500">
                         <span>{p.Size || "Standard"}</span>
                         <span>{p.Color || ""}</span>

@@ -28,7 +28,10 @@ const SHEETS = {
   emailLogs: "EmailLogs",
   auditLogs: "AuditLogs",
   backups: "Backups",
-  emailVerifications: "EmailVerifications"
+  emailVerifications: "EmailVerifications",
+  wishlists: "Wishlists",
+  reviews: "Reviews",
+  coupons: "Coupons"
 };
 
 function doGet(e) {
@@ -62,6 +65,8 @@ function doGet(e) {
     if (action === "emailLogs") return getByShop(SHEETS.emailLogs, shopId, "emailLogs");
     if (action === "auditLogs") return getByShop(SHEETS.auditLogs, shopId, "auditLogs");
     if (action === "backups") return getByShop(SHEETS.backups, shopId, "backups");
+    if (action === "customerOrders") return getCustomerOrders(p.email, shopId);
+    if (action === "partnerDashboard") return getPartnerDashboard(p.partnerId, shopId);
 
     return json({ success: false, message: "Invalid GET action" });
   } catch (err) {
@@ -125,6 +130,13 @@ function doPost(e) {
     if (action === "getCashFlowReport") return getCashFlowReport(data);
     if (action === "getPartnerSettlementReport") return getPartnerSettlementReport(data);
     if (action === "getImportCostAnalysis") return getImportCostAnalysis(data);
+
+    if (action === "createWishlist") return createWishlist(data);
+    if (action === "createReview") return createReview(data);
+    if (action === "createCoupon") return createCoupon(data);
+    if (action === "validateCoupon") return validateCoupon(data);
+    if (action === "generateAllOrderDocuments") return generateAllOrderDocuments(data);
+    if (action === "roleCheck") return roleCheck(data);
 
     return json({ success: false, message: "Invalid POST action" });
   } catch (err) {
@@ -209,6 +221,18 @@ function setupSheets() {
 
   createSheet(SHEETS.emailVerifications, [
     "Created At","Shop ID","Email","Code","Expiry","Verified","Verified At","Purpose"
+  ]);
+
+  createSheet(SHEETS.wishlists, [
+    "Created At","Shop ID","Wishlist ID","Customer Email","Product ID","Product Name","Status"
+  ]);
+
+  createSheet(SHEETS.reviews, [
+    "Created At","Shop ID","Review ID","Product ID","Customer Name","Rating","Comment","Status"
+  ]);
+
+  createSheet(SHEETS.coupons, [
+    "Created At","Shop ID","Coupon Code","Discount Type","Discount Value","Start Date","End Date","Status"
   ]);
 }
 
@@ -1553,4 +1577,120 @@ function getImportCostAnalysis(data) {
   });
 
   return json({ success: true, summary, report });
+}
+
+
+/* ======================================================
+   FRONTEND PRODUCTION SUPPORT
+====================================================== */
+
+function getCustomerOrders(email, shopId) {
+  const target = String(email || "").trim().toLowerCase();
+  if (!target) return json({ success: false, message: "Email required" });
+
+  const orders = getSheetDataArray(SHEETS.orders)
+    .filter(r =>
+      String(r["Shop ID"]) === String(shopId || DEFAULT_SHOP_ID) &&
+      String(r.Email || r.email || "").trim().toLowerCase() === target
+    );
+
+  return json({ success: true, orders });
+}
+
+function getPartnerDashboard(partnerId, shopId) {
+  if (!partnerId) return json({ success: false, message: "Partner ID required" });
+
+  const partner = findRowObject(SHEETS.partners, "Partner ID", partnerId);
+  const commissions = getSheetDataArray(SHEETS.partnerCommissions)
+    .filter(r =>
+      String(r["Shop ID"]) === String(shopId || DEFAULT_SHOP_ID) &&
+      String(r["Partner ID"]) === String(partnerId)
+    );
+
+  const totalSales = commissions.reduce((s, r) => s + Number(r["Sale Amount"] || 0), 0);
+  const totalCommission = commissions.reduce((s, r) => s + Number(r["Commission Amount"] || 0), 0);
+  const paidCommission = commissions
+    .filter(r => String(r.Status).toLowerCase() === "paid")
+    .reduce((s, r) => s + Number(r["Commission Amount"] || 0), 0);
+
+  return json({
+    success: true,
+    partner,
+    dashboard: {
+      totalOrders: commissions.length,
+      totalSales,
+      totalCommission,
+      paidCommission,
+      unpaidCommission: totalCommission - paidCommission
+    },
+    commissions
+  });
+}
+
+function createWishlist(data) {
+  const wishlistId = generateId("WISH", SHEETS.wishlists);
+  getSheet(SHEETS.wishlists).appendRow([
+    new Date(),
+    data.shopId || DEFAULT_SHOP_ID,
+    wishlistId,
+    data.email || "",
+    data.productId || "",
+    data.productName || "",
+    "Active"
+  ]);
+  return json({ success: true, wishlistId });
+}
+
+function createReview(data) {
+  const reviewId = generateId("REV", SHEETS.reviews);
+  getSheet(SHEETS.reviews).appendRow([
+    new Date(),
+    data.shopId || DEFAULT_SHOP_ID,
+    reviewId,
+    data.productId || "",
+    data.customerName || "",
+    Number(data.rating || 5),
+    data.comment || "",
+    "Pending"
+  ]);
+  return json({ success: true, reviewId });
+}
+
+function createCoupon(data) {
+  getSheet(SHEETS.coupons).appendRow([
+    new Date(),
+    data.shopId || DEFAULT_SHOP_ID,
+    data.couponCode || "",
+    data.discountType || "Amount",
+    Number(data.discountValue || 0),
+    data.startDate || "",
+    data.endDate || "",
+    "Active"
+  ]);
+  return json({ success: true, couponCode: data.couponCode });
+}
+
+
+/* ======================================================
+   FINAL PRODUCTION HELPERS
+====================================================== */
+
+function validateCoupon(data) {
+  const code = String(data.couponCode || "").trim();
+  const rows = getSheetDataArray(SHEETS.coupons || "Coupons");
+  const found = rows.find(r => String(r["Coupon Code"]).trim() === code && String(r.Status).toLowerCase() === "active");
+  if (!found) return json({ success: false, message: "Invalid coupon" });
+  return json({ success: true, coupon: found });
+}
+
+function generateAllOrderDocuments(data) {
+  const invoice = generateInvoicePdf(data);
+  const receipt = generateReceiptPdf(data);
+  const delivery = generateDeliverySlipPdf(data);
+  return json({ success: true, message: "Documents generated. Check Documents sheet." });
+}
+
+function roleCheck(data) {
+  const allowed = hasPermission(data.role || "Staff", data.permission || "");
+  return json({ success: true, allowed });
 }

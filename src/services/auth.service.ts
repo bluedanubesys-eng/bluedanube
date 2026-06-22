@@ -7,12 +7,16 @@ export function getSession() {
   return raw ? JSON.parse(raw) : null;
 }
 
-export function setSession(data: unknown) {
+export function setSession(data: any) {
   localStorage.setItem("bd_session", JSON.stringify(data));
+  if (data?.token) {
+    document.cookie = `bd_token=${data.token}; path=/; max-age=86400; SameSite=Lax`;
+  }
 }
 
 export function logout() {
   localStorage.removeItem("bd_session");
+  document.cookie = "bd_token=; path=/; max-age=0";
   window.location.href = "/login";
 }
 

@@ -25,7 +25,13 @@ export default function CheckoutPage() {
 
     const subtotal = cartTotal(items);
     const deliveryFee = Number(f.get("deliveryFee") || 0);
-    const grandTotal = subtotal + deliveryFee;
+    const couponCode = String(f.get("couponCode") || "");
+    let couponDiscount = 0;
+    if (couponCode) {
+      const coupon = await erpPost({ action: "validateCoupon", shopId: CONFIG.defaultShopId, couponCode });
+      if (coupon.success) couponDiscount = Number(coupon.coupon["Discount Value"] || 0);
+    }
+    const grandTotal = Math.max(subtotal + deliveryFee - couponDiscount, 0);
 
     const res = await erpPost({
       action: "createOrderWithPaymentScreenshot",
@@ -103,6 +109,7 @@ export default function CheckoutPage() {
                 <option>Cash</option>
               </select>
 
+              <input name="couponCode" placeholder="Coupon Code optional" className="rounded-xl border px-4 py-3" />
               <input name="paymentScreenshot" type="file" accept="image/*" required className="rounded-xl border px-4 py-3" />
               <input name="deliveryFee" type="number" defaultValue="0" placeholder="Delivery Fee" className="rounded-xl border px-4 py-3" />
             </div>
