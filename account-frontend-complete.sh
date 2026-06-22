@@ -1,3 +1,7 @@
+#!/usr/bin/env bash
+set -e
+
+cat > src/app/account/page.tsx << 'TSX'
 "use client";
 
 import { erpGet } from "@/lib/api";
@@ -175,3 +179,7 @@ export default function AccountPage() {
     </main>
   );
 }
+TSX
+
+npm run build
+./test-pages.sh
