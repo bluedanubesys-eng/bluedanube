@@ -1,5 +1,6 @@
 "use client";
 
+import { sendOtp, verifyOtp } from "@/services/auth.service";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { erpPost } from "@/lib/api";
 import { CONFIG } from "@/lib/config";
@@ -15,6 +16,10 @@ export default function CheckoutPage() {
   const [step, setStep] = useState(0);
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [emailForOtp, setEmailForOtp] = useState("");
 
   useEffect(() => {
     const timer = window.setTimeout(() => setItems(getCart()), 0);
@@ -25,6 +30,11 @@ export default function CheckoutPage() {
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (!otpVerified) {
+      setMsg("Please verify your Gmail first.");
+      return;
+    }
     setLoading(true);
     setMsg("");
 
@@ -140,7 +150,63 @@ export default function CheckoutPage() {
                   <h2 className="text-2xl font-black">Customer Information</h2>
                   <input name="customerName" required placeholder="Customer Name" className="rounded-xl border px-4 py-3" />
                   <input name="phone" required placeholder="Phone" className="rounded-xl border px-4 py-3" />
-                  <input name="email" type="email" required placeholder="Gmail" className="rounded-xl border px-4 py-3" />
+                  <input
+                    name="email"
+                    type="email"
+                    required
+                    placeholder="Gmail"
+                    onChange={(e)=>setEmailForOtp(e.target.value)}
+                    className="rounded-xl border px-4 py-3"
+                  />
+
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={async()=>{
+                        const r = await sendOtp(emailForOtp);
+                        if(r.success){
+                          setOtpSent(true);
+                          alert("OTP sent to Gmail");
+                        }
+                      }}
+                      className="rounded-xl bg-blue-950 px-4 py-3 font-black text-white"
+                    >
+                      Send OTP
+                    </button>
+
+                    {otpVerified && (
+                      <span className="rounded-xl bg-green-100 px-4 py-3 font-black text-green-700">
+                        Verified
+                      </span>
+                    )}
+                  </div>
+
+                  {otpSent && (
+                    <div className="flex gap-2">
+                      <input
+                        value={otp}
+                        onChange={(e)=>setOtp(e.target.value)}
+                        placeholder="Enter OTP"
+                        className="flex-1 rounded-xl border px-4 py-3"
+                      />
+
+                      <button
+                        type="button"
+                        onClick={async()=>{
+                          const r = await verifyOtp(emailForOtp, otp);
+                          if(r.success){
+                            setOtpVerified(true);
+                            alert("Gmail verified");
+                          } else {
+                            alert("Invalid OTP");
+                          }
+                        }}
+                        className="rounded-xl bg-green-600 px-4 py-3 font-black text-white"
+                      >
+                        Verify
+                      </button>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -248,3 +314,6 @@ export default function CheckoutPage() {
     </main>
   );
 }
+
+
+/* CUSTOMER OTP CHECKOUT */
