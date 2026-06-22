@@ -1,3 +1,4 @@
+import Image from "next/image";
 "use client";
 import { useEffect, useState } from "react";
 import { getCart } from "@/services/cart.service";
@@ -29,8 +30,16 @@ export default function MarketplaceHeader() {
 
       <div className="bg-[#0b255c] text-white">
         <div className="mx-auto flex max-w-7xl items-center gap-4 px-4 py-4">
-          <a href="/" className="text-2xl font-black tracking-tight">
-            Blue Danube
+          <a href="/" className="flex items-center gap-3">
+            <Image
+              src="/logo.png"
+              alt="Blue Danube"
+              width={42}
+              height={42}
+              priority
+              className="h-10 w-10 rounded-xl bg-white object-contain p-1"
+            />
+            <span className="text-2xl font-black tracking-tight">Blue Danube</span>
           </a>
 
           <div className="hidden flex-1 md:block">

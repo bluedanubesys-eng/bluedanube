@@ -1,5 +1,5 @@
 "use client";
-import { successPopup, errorPopup, loadingPopup, closePopup } from "@/lib/popup";
+import { successPopup, errorPopup } from "@/lib/popup";
 
 import AdminLayout from "@/components/layout/AdminLayout";
 import { erpGet, erpPost } from "@/lib/api";
@@ -39,7 +39,7 @@ export default function OrdersPage() {
   );
 
   async function updateStatus(orderId: string, status: string) {
-    if (!orderId) return successPopup(String("Order ID missing"));
+    if (!orderId) return errorPopup("Order ID missing");
 
     const r = await erpPost({
       action: "adminUpdateOrderStatus",
@@ -48,7 +48,11 @@ export default function OrdersPage() {
       status,
     });
 
-    successPopup(String(r.success ? `Order ${status}. Customer email sent.` : r.message));
+    if (r.success) {
+      successPopup(`Order ${status}. Customer email sent.`);
+    } else {
+      errorPopup(r.message || "Action failed");
+    }
     if (r.success) loadOrders();
   }
 
@@ -61,7 +65,11 @@ export default function OrdersPage() {
       types: ["invoice", "receipt", "delivery"],
     });
 
-    successPopup(String(r.success ? "PDF documents sent to customer Gmail." : r.message));
+    if (r.success) {
+      successPopup("PDF documents sent to customer Gmail.");
+    } else {
+      errorPopup(r.message || "PDF email failed");
+    }
   }
 
   return (
@@ -144,8 +152,12 @@ export default function OrdersPage() {
                       key={status === s ? `✓ ${s}` : s}
                       type="button"
                       onClick={() => updateStatus(orderId, s)}
-                      className={`rounded-xl px-3 py-3 text-xs font-black text-white ${
-                        s === "Cancelled" ? "bg-red-600" : "bg-blue-950"
+                      className={`rounded-xl px-3 py-3 text-xs font-black text-white transition-all ${
+                        status === s
+                          ? "bg-green-600 ring-4 ring-green-200"
+                          : s === "Cancelled"
+                          ? "bg-red-600 hover:bg-red-700"
+                          : "bg-blue-950 hover:bg-blue-800"
                       }`}
                     >
                       {status === s ? `✓ ${s}` : s}

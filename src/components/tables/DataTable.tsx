@@ -1,4 +1,5 @@
 "use client";
+import { successPopup } from "@/lib/popup";
 import { useMemo, useState } from "react";
 
 export type TableRow = Record<string, string | number | boolean | null | undefined>;
@@ -43,7 +44,7 @@ export default function DataTable({
             className="rounded-xl border px-4 py-3"
           />
           <button
-            onClick={() => alert("Export will be connected to backend export function.")}
+            onClick={() => successPopup("Export will be connected to backend export function.")}
             className="rounded-xl border px-5 py-3 font-black"
           >
             Export
@@ -79,7 +80,7 @@ export default function DataTable({
                   ))}
                   <td className="p-3">
                     <button
-                      onClick={() => alert(JSON.stringify(r, null, 2))}
+                      onClick={() => successPopup("Action completed")}
                       className="rounded-lg border px-3 py-2 text-xs font-black"
                     >
                       View

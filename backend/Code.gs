@@ -2121,19 +2121,20 @@ function sendCustomerOrderStatusAutoEmail(orderId, status, note) {
 }
 
 
+
+
 function setupFirstAdmin(p) {
-  const email = String(p.email || "admin@bluedanube.com").trim();
-  const password = String(p.password || "Admin@12345").trim();
+  p = p || {};
+  const email = String(p.email || "bluedanube.sys@gmail.com").trim().toLowerCase();
   const name = String(p.name || "Blue Danube Admin").trim();
 
   const existing = findUserByEmail(email);
   if (existing) {
-    PropertiesService.getScriptProperties().setProperty("PWD_" + existing["User ID"], password);
     updateRows(SHEETS.users, "User ID", existing["User ID"], {
       "Role": "Owner",
       "Status": "Active"
     });
-    return json({ success: true, message: "Admin password reset", email: email, password: password });
+    return json({ success: true, message: "Admin already exists and activated", email: email });
   }
 
   const userId = generateId("USR", SHEETS.users);
@@ -2148,7 +2149,5 @@ function setupFirstAdmin(p) {
     "Active"
   ]);
 
-  PropertiesService.getScriptProperties().setProperty("PWD_" + userId, password);
-
-  return json({ success: true, message: "Admin created", userId: userId, email: email, password: password });
+  return json({ success: true, message: "Admin created for Gmail OTP login", userId: userId, email: email });
 }
