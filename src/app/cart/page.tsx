@@ -60,9 +60,27 @@ export default function CartPage() {
                     <p className="mt-2 font-black text-blue-950">{p["Selling Price"] || 0} MMK</p>
 
                     <div className="mt-4 flex items-center gap-3">
-                      <button onClick={() => updateQty(p["Product ID"] || "", item.qty - 1)} className="rounded-lg border px-3 py-1 font-black">-</button>
+                      <button
+                        onClick={() => updateQty(p["Product ID"] || "", item.qty - 1)}
+                        disabled={item.qty <= 1}
+                        className="rounded-lg border px-3 py-1 font-black disabled:opacity-40"
+                      >
+                        -
+                      </button>
+
                       <span className="font-black">{item.qty}</span>
-                      <button onClick={() => updateQty(p["Product ID"] || "", item.qty + 1)} className="rounded-lg border px-3 py-1 font-black">+</button>
+
+                      <button
+                        onClick={() => updateQty(p["Product ID"] || "", item.qty + 1)}
+                        disabled={item.qty >= Number(p["Stock Qty"] || 0)}
+                        className="rounded-lg border px-3 py-1 font-black disabled:opacity-40"
+                      >
+                        +
+                      </button>
+
+                      <span className="ml-3 rounded-full bg-green-50 px-3 py-1 text-xs font-black text-green-700">
+                        Stock: {Number(p["Stock Qty"] || 0)}
+                      </span>
                     </div>
                   </div>
                 </div>
