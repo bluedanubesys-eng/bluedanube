@@ -107,7 +107,7 @@ export default function OrdersPage() {
         <div className="mt-8 space-y-5">
           {filtered.map((o) => {
             const orderId = String(o["Order ID"] || "");
-            const email = String(o.Email || o.email || "");
+            const email = String(o.Email || o.email || o["Customer Email"] || "");
             const status = String(o["Order Status"] || "Pending");
 
             return (
@@ -117,10 +117,10 @@ export default function OrdersPage() {
                     <p className="text-sm font-bold text-slate-500">Order ID</p>
                     <h2 className="text-2xl font-black">{orderId}</h2>
                     <p className="mt-2 text-slate-600">
-                      {String(o["Customer Name"] || "-")} • {String(o.Phone || "-")} • {email || "No email"}
+                      Name: {String(o["Customer Name"] || o.customerName || "-")} • Phone: {String(o.Phone || o.phone || "-")} • Email: {email || "No email"}
                     </p>
                     <p className="mt-1 text-slate-600">
-                      {String(o.Address || "-")} {String(o.Township || "")}
+                      Address: {String(o.Address || o.address || "-")} {String(o.Township || o.township || "")}
                     </p>
                   </div>
 
