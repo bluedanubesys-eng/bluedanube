@@ -1,4 +1,5 @@
 "use client";
+import toast from "react-hot-toast";
 
 import { addToCart } from "@/services/cart.service";
 import { getProductImage } from "@/services/product.service";
@@ -23,7 +24,7 @@ export default function ProductCard({ product }: { product: Product }) {
       productName: product["Product Name"],
     });
 
-    alert("Added to wishlist");
+    toast.success(String("Added to wishlist"));
   }
 
   return (

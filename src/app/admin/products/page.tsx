@@ -1,5 +1,4 @@
 "use client";
-
 import AdminLayout from "@/components/layout/AdminLayout";
 import { erpPost } from "@/lib/api";
 import { CONFIG } from "@/lib/config";

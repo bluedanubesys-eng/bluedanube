@@ -1,5 +1,4 @@
 "use client";
-
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import MarketplaceHeader from "@/components/layout/MarketplaceHeader";
 import ProductCard from "@/components/marketplace/ProductCard";

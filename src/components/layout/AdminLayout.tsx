@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from "react";
 import { logout } from "@/services/auth.service";
 import NotificationBell from "@/components/widgets/NotificationBell";

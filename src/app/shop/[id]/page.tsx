@@ -1,4 +1,5 @@
 "use client";
+import toast from "react-hot-toast";
 
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { addToCart } from "@/services/cart.service";
@@ -48,7 +49,7 @@ export default function ProductDetailPage() {
       email,
     });
 
-    alert("Added to wishlist");
+    toast.success(String("Added to wishlist"));
   }
 
   async function review(e: React.FormEvent<HTMLFormElement>) {
@@ -66,7 +67,7 @@ export default function ProductDetailPage() {
       comment: f.get("comment"),
     });
 
-    alert("Review submitted");
+    toast.success(String("Review submitted"));
     e.currentTarget.reset();
   }
 

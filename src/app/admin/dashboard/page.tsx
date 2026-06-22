@@ -1,5 +1,4 @@
 "use client";
-
 import AdminLayout from "@/components/layout/AdminLayout";
 import { Card } from "@/components/ui/Card";
 import FinanceMiniCharts from "@/components/charts/FinanceMiniCharts";

@@ -1,5 +1,4 @@
 "use client";
-
 import { BarChart, Bar, ResponsiveContainer, XAxis, YAxis, Tooltip } from "recharts";
 
 export default function FinanceMiniCharts({ data }: { data: any }) {

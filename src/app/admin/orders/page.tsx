@@ -1,4 +1,5 @@
 "use client";
+import toast from "react-hot-toast";
 
 import AdminLayout from "@/components/layout/AdminLayout";
 import { erpGet, erpPost } from "@/lib/api";
@@ -38,7 +39,7 @@ export default function OrdersPage() {
   );
 
   async function updateStatus(orderId: string, status: string) {
-    if (!orderId) return alert("Order ID missing");
+    if (!orderId) return toast.success(String("Order ID missing"));
 
     const r = await erpPost({
       action: "adminUpdateOrderStatus",
@@ -47,7 +48,7 @@ export default function OrdersPage() {
       status,
     });
 
-    alert(r.success ? `Order ${status}. Customer email sent.` : r.message);
+    toast.success(String(r.success ? `Order ${status}. Customer email sent.` : r.message));
     if (r.success) loadOrders();
   }
 
@@ -60,7 +61,7 @@ export default function OrdersPage() {
       types: ["invoice", "receipt", "delivery"],
     });
 
-    alert(r.success ? "PDF documents sent to customer Gmail." : r.message);
+    toast.success(String(r.success ? "PDF documents sent to customer Gmail." : r.message));
   }
 
   return (
@@ -167,7 +168,7 @@ export default function OrdersPage() {
                       await erpPost({ action: "generateInvoicePdf", shopId: CONFIG.defaultShopId, orderId });
                       await erpPost({ action: "generateReceiptPdf", shopId: CONFIG.defaultShopId, orderId });
                       await erpPost({ action: "generateDeliverySlipPdf", shopId: CONFIG.defaultShopId, orderId });
-                      alert("PDF documents generated.");
+                      toast.success(String("PDF documents generated."));
                     }}
                     className="rounded-xl border px-5 py-3 font-black"
                   >

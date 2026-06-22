@@ -1,5 +1,4 @@
 "use client";
-
 import AdminLayout from "@/components/layout/AdminLayout";
 import DataTable, { type TableRow } from "@/components/tables/DataTable";
 import { erpGet } from "@/lib/api";

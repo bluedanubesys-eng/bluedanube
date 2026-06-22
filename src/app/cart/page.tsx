@@ -1,5 +1,4 @@
 "use client";
-
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { cartTotal, getCart, updateQty } from "@/services/cart.service";
 import { getProductImage } from "@/services/product.service";

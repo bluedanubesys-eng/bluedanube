@@ -1,5 +1,4 @@
 "use client";
-
 export default function NotificationBell() {
   return (
     <button className="relative rounded-full border bg-white px-4 py-2 text-sm font-black shadow-sm">

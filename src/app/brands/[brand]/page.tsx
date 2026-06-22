@@ -1,5 +1,4 @@
 "use client";
-
 import MarketplaceHeader from "@/components/layout/MarketplaceHeader";
 import ProductCard from "@/components/marketplace/ProductCard";
 import { getProducts } from "@/services/product.service";

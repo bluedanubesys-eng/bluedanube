@@ -1,5 +1,4 @@
 "use client";
-
 import { getProductImage, getProducts } from "@/services/product.service";
 import type { Product } from "@/types/product";
 import { useEffect, useMemo, useState } from "react";

@@ -1,5 +1,4 @@
 "use client";
-
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { erpPost } from "@/lib/api";
 import { CONFIG } from "@/lib/config";
@@ -7,45 +6,85 @@ import { fileToBase64 } from "@/lib/file";
 import { cartTotal, clearCart, getCart } from "@/services/cart.service";
 import type { CartItem } from "@/types/cart";
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 
 const steps = ["Customer", "Delivery", "Payment", "Review"];
 
 export default function CheckoutPage() {
   const [items, setItems] = useState<CartItem[]>([]);
   const [step, setStep] = useState(0);
-  const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const [customerName, setCustomerName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [address, setAddress] = useState("");
+  const [township, setTownship] = useState("");
+  const [deliveryFee, setDeliveryFee] = useState(0);
+  const [paymentMethod, setPaymentMethod] = useState("KBZ Pay");
+  const [couponCode, setCouponCode] = useState("");
+  const [paymentFile, setPaymentFile] = useState<File | null>(null);
+
   const [otpSent, setOtpSent] = useState(false);
   const [otpVerified, setOtpVerified] = useState(false);
   const [otp, setOtp] = useState("");
-  const [emailForOtp, setEmailForOtp] = useState("");
 
   useEffect(() => {
-    const timer = window.setTimeout(() => setItems(getCart()), 0);
-    return () => window.clearTimeout(timer);
+    setItems(getCart());
   }, []);
 
   const subtotal = cartTotal(items);
 
-  async function submit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
+  async function sendOtp() {
+    if (!email) return toast.error("Please enter Gmail first");
 
-    if (!otpVerified) {
-      setMsg("Please verify your Gmail first.");
-      return;
+    const r = await erpPost({
+      action: "sendCustomerCheckoutOtp",
+      shopId: CONFIG.defaultShopId,
+      email,
+    });
+
+    if (r.success) {
+      setOtpSent(true);
+      toast.success("OTP sent to Gmail");
+    } else {
+      toast.error(r.message || "OTP send failed");
     }
+  }
+
+  async function verifyOtp() {
+    const r = await erpPost({
+      action: "verifyCustomerCheckoutOtp",
+      shopId: CONFIG.defaultShopId,
+      email,
+      code: otp,
+    });
+
+    if (r.success) {
+      setOtpVerified(true);
+      toast.success("Gmail verified");
+    } else {
+      toast.error(r.message || "Invalid OTP");
+    }
+  }
+
+  async function submitOrder() {
+    if (!otpVerified) return toast.error("Please verify Gmail first");
+    if (!customerName || !phone || !email || !address) return toast.error("Please complete customer information");
+    if (!paymentFile) return toast.error("Please upload payment screenshot");
+
+    for (const item of items) {
+      const stockQty = Number(item.product["Stock Qty"] || 0);
+      if (item.qty > stockQty) {
+        return toast.error(`${item.product["Product Name"]} only has ${stockQty} in stock`);
+      }
+    }
+
     setLoading(true);
-    setMsg("");
 
-    const f = new FormData(e.currentTarget);
-    const file = f.get("paymentScreenshot") as File;
-    const paymentScreenshotBase64 =
-      file && file.size > 0 ? await fileToBase64(file) : "";
+    const paymentScreenshotBase64 = await fileToBase64(paymentFile);
 
-    const deliveryFee = Number(f.get("deliveryFee") || 0);
-    const couponCode = String(f.get("couponCode") || "");
     let couponDiscount = 0;
-
     if (couponCode) {
       const coupon = await erpPost({
         action: "validateCoupon",
@@ -60,17 +99,17 @@ export default function CheckoutPage() {
     const res = await erpPost({
       action: "createOrderWithPaymentScreenshot",
       shopId: CONFIG.defaultShopId,
-      customerName: f.get("customerName"),
-      phone: f.get("phone"),
-      email: f.get("email"),
-      address: f.get("address"),
-      township: f.get("township"),
-      paymentMethod: f.get("paymentMethod"),
+      customerName,
+      phone,
+      email,
+      address,
+      township,
+      paymentMethod,
       deliveryFee,
       discount: couponDiscount,
       tax: 0,
       paymentScreenshotBase64,
-      paymentScreenshotName: file && file.size > 0 ? file.name : "",
+      paymentScreenshotName: paymentFile.name,
       items: items.map((i) => ({
         productId: i.product["Product ID"],
         productName: i.product["Product Name"],
@@ -83,15 +122,15 @@ export default function CheckoutPage() {
       remarks: `Checkout total ${grandTotal} MMK`,
     });
 
+    setLoading(false);
+
     if (res.success) {
       clearCart();
       setItems([]);
-      setMsg(`Order submitted successfully. Order ID: ${res.orderId}`);
+      toast.success(`Order submitted: ${res.orderId}`);
     } else {
-      setMsg(res.message || "Order failed");
+      toast.error(res.message || "Order failed");
     }
-
-    setLoading(false);
   }
 
   return (
@@ -109,112 +148,42 @@ export default function CheckoutPage() {
 
       <section className="mx-auto max-w-7xl px-6 py-8">
         <div className="rounded-[2rem] bg-white p-8 shadow-sm ring-1 ring-slate-200">
-          <p className="text-sm font-black uppercase tracking-[0.25em] text-[#0b255c]">
-            Secure Checkout
-          </p>
+          <p className="text-sm font-black uppercase tracking-[0.25em] text-[#0b255c]">Secure Checkout</p>
           <h1 className="mt-2 text-4xl font-black">Complete Your Order</h1>
-          <p className="mt-3 text-slate-500">
-            Fill customer information, delivery details, payment method and review your order before submission.
-          </p>
 
           <div className="mt-6 grid gap-3 md:grid-cols-4">
             {steps.map((s, i) => (
-              <button
-                key={s}
-                onClick={() => setStep(i)}
-                className={`rounded-2xl p-4 text-sm font-black ${
-                  i <= step ? "bg-[#0b255c] text-white" : "bg-slate-100 text-slate-500"
-                }`}
-              >
+              <button key={s} type="button" onClick={() => setStep(i)} className={`rounded-2xl p-4 text-sm font-black ${i <= step ? "bg-[#0b255c] text-white" : "bg-slate-100 text-slate-500"}`}>
                 {i + 1}. {s}
               </button>
             ))}
           </div>
         </div>
 
-        {!items.length && !msg && (
+        {!items.length ? (
           <div className="mt-8 rounded-[2rem] bg-white p-10 text-center shadow-sm ring-1 ring-slate-200">
             <h2 className="text-2xl font-black">Your cart is empty</h2>
-            <a href="/shop" className="mt-5 inline-block rounded-full bg-[#0b255c] px-6 py-3 font-black text-white">
-              Continue Shopping
-            </a>
+            <a href="/shop" className="mt-5 inline-block rounded-full bg-[#0b255c] px-6 py-3 font-black text-white">Continue Shopping</a>
           </div>
-        )}
-
-        {!!items.length && (
-          <form onSubmit={submit} className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
+        ) : (
+          <div className="mt-8 grid gap-6 lg:grid-cols-[1fr_380px]">
             <div className="rounded-[2rem] bg-white p-8 shadow-sm ring-1 ring-slate-200">
               {step === 0 && (
                 <div className="grid gap-4">
                   <h2 className="text-2xl font-black">Customer Information</h2>
-                  <input name="customerName" required placeholder="Customer Name" className="rounded-xl border px-4 py-3" />
-                  <input name="phone" required placeholder="Phone" className="rounded-xl border px-4 py-3" />
-                  <input
-                    name="email"
-                    type="email"
-                    required
-                    placeholder="Gmail"
-                    onChange={(e)=>setEmailForOtp(e.target.value)}
-                    className="rounded-xl border px-4 py-3"
-                  />
+                  <input value={customerName} onChange={(e) => setCustomerName(e.target.value)} required placeholder="Customer Name" className="rounded-xl border px-4 py-3" />
+                  <input value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="Phone" className="rounded-xl border px-4 py-3" />
+                  <input value={email} onChange={(e) => { setEmail(e.target.value); setOtpVerified(false); }} type="email" required placeholder="Gmail" className="rounded-xl border px-4 py-3" />
 
                   <div className="flex gap-2">
-                    <button
-                      type="button"
-                      onClick={async()=>{
-                        const r = await erpPost({
-                          action: "sendCustomerCheckoutOtp",
-                          shopId: CONFIG.defaultShopId,
-                          email: emailForOtp,
-                        });
-                        if(r.success){
-                          setOtpSent(true);
-                          alert("OTP sent to Gmail");
-                        } else {
-                          alert(r.message || "OTP send failed");
-                        }
-                      }}
-                      className="rounded-xl bg-blue-950 px-4 py-3 font-black text-white"
-                    >
-                      Send OTP
-                    </button>
-
-                    {otpVerified && (
-                      <span className="rounded-xl bg-green-100 px-4 py-3 font-black text-green-700">
-                        Verified
-                      </span>
-                    )}
+                    <button type="button" onClick={sendOtp} className="rounded-xl bg-blue-950 px-4 py-3 font-black text-white">Send OTP</button>
+                    {otpVerified && <span className="rounded-xl bg-green-100 px-4 py-3 font-black text-green-700">Verified</span>}
                   </div>
 
-                  {otpSent && (
+                  {otpSent && !otpVerified && (
                     <div className="flex gap-2">
-                      <input
-                        value={otp}
-                        onChange={(e)=>setOtp(e.target.value)}
-                        placeholder="Enter OTP"
-                        className="flex-1 rounded-xl border px-4 py-3"
-                      />
-
-                      <button
-                        type="button"
-                        onClick={async()=>{
-                          const r = await erpPost({
-                            action: "verifyCustomerCheckoutOtp",
-                            shopId: CONFIG.defaultShopId,
-                            email: emailForOtp,
-                            code: otp,
-                          });
-                          if(r.success){
-                            setOtpVerified(true);
-                            alert("Gmail verified");
-                          } else {
-                            alert(r.message || "Invalid OTP");
-                          }
-                        }}
-                        className="rounded-xl bg-green-600 px-4 py-3 font-black text-white"
-                      >
-                        Verify
-                      </button>
+                      <input value={otp} onChange={(e) => setOtp(e.target.value)} placeholder="Enter OTP" className="flex-1 rounded-xl border px-4 py-3" />
+                      <button type="button" onClick={verifyOtp} className="rounded-xl bg-green-600 px-4 py-3 font-black text-white">Verify</button>
                     </div>
                   )}
                 </div>
@@ -223,64 +192,110 @@ export default function CheckoutPage() {
               {step === 1 && (
                 <div className="grid gap-4">
                   <h2 className="text-2xl font-black">Delivery Details</h2>
-                  <input name="address" required placeholder="Address" className="rounded-xl border px-4 py-3" />
-                  <input name="township" placeholder="Township" className="rounded-xl border px-4 py-3" />
-                  <input name="deliveryFee" type="number" defaultValue="0" placeholder="Delivery Fee" className="rounded-xl border px-4 py-3" />
+                  <input value={address} onChange={(e) => setAddress(e.target.value)} required placeholder="Address" className="rounded-xl border px-4 py-3" />
+                  <input value={township} onChange={(e) => setTownship(e.target.value)} placeholder="Township" className="rounded-xl border px-4 py-3" />
+                  <input value={deliveryFee} onChange={(e) => setDeliveryFee(Number(e.target.value || 0))} type="number" placeholder="Delivery Fee" className="rounded-xl border px-4 py-3" />
                 </div>
               )}
 
               {step === 2 && (
                 <div className="grid gap-4">
                   <h2 className="text-2xl font-black">Payment</h2>
-                  <select name="paymentMethod" className="rounded-xl border px-4 py-3">
+                  <select value={paymentMethod} onChange={(e) => setPaymentMethod(e.target.value)} className="rounded-xl border px-4 py-3">
                     <option>KBZ Pay</option>
                     <option>Wave Pay</option>
                     <option>AYA Pay</option>
                     <option>Bank Transfer</option>
                     <option>Cash</option>
                   </select>
-                  <input name="couponCode" placeholder="Coupon Code optional" className="rounded-xl border px-4 py-3" />
-                  <input name="paymentScreenshot" type="file" accept="image/*" required className="rounded-xl border px-4 py-3" />
+                  <input value={couponCode} onChange={(e) => setCouponCode(e.target.value)} placeholder="Coupon Code optional" className="rounded-xl border px-4 py-3" />
+                  <input onChange={(e) => setPaymentFile(e.target.files?.[0] || null)} type="file" accept="image/*" required className="rounded-xl border px-4 py-3" />
+                  {paymentFile && <p className="text-sm font-bold text-green-600">Payment screenshot selected: {paymentFile.name}</p>}
                 </div>
               )}
 
               {step === 3 && (
                 <div>
-                  <h2 className="text-2xl font-black">Review Order</h2>
-                  <div className="mt-5 space-y-3">
-                    {items.map((i) => (
-                      <div key={i.product["Product ID"]} className="flex justify-between rounded-2xl bg-slate-50 p-4 text-sm">
-                        <span>{i.product["Product Name"]} × {i.qty}</span>
-                        <b>{(Number(i.product["Selling Price"] || 0) * i.qty).toLocaleString()} MMK</b>
+                  <h2 className="text-2xl font-black">Review Your Order</h2>
+                  <p className="mt-2 text-sm text-slate-500">
+                    Please check all information carefully before submitting your order.
+                  </p>
+
+                  <div className="mt-6 grid gap-5">
+                    <div className="rounded-2xl border bg-white p-5">
+                      <h3 className="text-lg font-black text-blue-950">Customer Information</h3>
+                      <div className="mt-3 grid gap-2 text-sm">
+                        <p><b>Name:</b> {customerName || "-"}</p>
+                        <p><b>Phone:</b> {phone || "-"}</p>
+                        <p><b>Gmail:</b> {email || "-"}</p>
+                        <p><b>Gmail Status:</b> {otpVerified ? "Verified ✅" : "Not Verified ❌"}</p>
                       </div>
-                    ))}
+                    </div>
+
+                    <div className="rounded-2xl border bg-white p-5">
+                      <h3 className="text-lg font-black text-blue-950">Delivery Information</h3>
+                      <div className="mt-3 grid gap-2 text-sm">
+                        <p><b>Address:</b> {address || "-"}</p>
+                        <p><b>Township:</b> {township || "-"}</p>
+                        <p><b>Delivery Fee:</b> {deliveryFee.toLocaleString()} MMK</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border bg-white p-5">
+                      <h3 className="text-lg font-black text-blue-950">Payment Information</h3>
+                      <div className="mt-3 grid gap-2 text-sm">
+                        <p><b>Payment Method:</b> {paymentMethod || "-"}</p>
+                        <p><b>Payment Screenshot:</b> {paymentFile?.name || "Not selected"}</p>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border bg-white p-5">
+                      <h3 className="text-lg font-black text-blue-950">Order Items</h3>
+                      <div className="mt-4 space-y-3">
+                        {items.map((i) => (
+                          <div key={i.product["Product ID"]} className="flex items-start justify-between border-b pb-3 text-sm last:border-b-0">
+                            <div>
+                              <p className="font-black">{i.product["Product Name"]}</p>
+                              <p className="text-slate-500">
+                                {i.product.Brand || "-"} • {i.product.Color || "-"} • {i.product.Size || "-"}
+                              </p>
+                              <p className="text-slate-500">
+                                Qty: {i.qty} / Stock: {Number(i.product["Stock Qty"] || 0)}
+                              </p>
+                            </div>
+                            <b>{(Number(i.product["Selling Price"] || 0) * i.qty).toLocaleString()} MMK</b>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl bg-slate-50 p-5">
+                      <h3 className="text-lg font-black text-blue-950">Order Summary</h3>
+                      <div className="mt-4 space-y-2 text-sm">
+                        <div className="flex justify-between">
+                          <span>Subtotal</span>
+                          <b>{subtotal.toLocaleString()} MMK</b>
+                        </div>
+                        <div className="flex justify-between">
+                          <span>Delivery Fee</span>
+                          <b>{deliveryFee.toLocaleString()} MMK</b>
+                        </div>
+                        <div className="border-t pt-3 flex justify-between text-xl font-black">
+                          <span>Grand Total</span>
+                          <span>{(subtotal + deliveryFee).toLocaleString()} MMK</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
               )}
 
               <div className="mt-8 flex justify-between">
-                <button
-                  type="button"
-                  disabled={step <= 0}
-                  onClick={() => setStep(step - 1)}
-                  className="rounded-xl border px-6 py-3 font-black disabled:opacity-40"
-                >
-                  Back
-                </button>
-
+                <button type="button" disabled={step <= 0} onClick={() => setStep(step - 1)} className="rounded-xl border px-6 py-3 font-black disabled:opacity-40">Back</button>
                 {step < 3 ? (
-                  <button
-                    type="button"
-                    onClick={() => setStep(step + 1)}
-                    className="rounded-xl bg-[#0b255c] px-6 py-3 font-black text-white"
-                  >
-                    Continue
-                  </button>
+                  <button type="button" onClick={() => setStep(step + 1)} className="rounded-xl bg-[#0b255c] px-6 py-3 font-black text-white">Continue</button>
                 ) : (
-                  <button
-                    disabled={loading}
-                    className="rounded-xl bg-[#0b255c] px-6 py-3 font-black text-white disabled:opacity-60"
-                  >
+                  <button type="button" disabled={loading || !otpVerified} onClick={submitOrder} className="rounded-xl bg-[#0b255c] px-6 py-3 font-black text-white disabled:opacity-60">
                     {loading ? "Submitting..." : "Submit Order"}
                   </button>
                 )}
@@ -302,28 +317,13 @@ export default function CheckoutPage() {
                   <span className="font-black">Subtotal</span>
                   <span className="font-black">{subtotal.toLocaleString()} MMK</span>
                 </div>
-                <p className="mt-2 text-sm text-slate-500">
-                  Delivery and coupon discount will be applied when submitted.
-                </p>
               </div>
             </aside>
-          </form>
-        )}
-
-        {msg && (
-          <div className="mt-8 rounded-[2rem] bg-white p-8 text-center shadow-sm ring-1 ring-slate-200">
-            <h2 className="text-2xl font-black">Order Result</h2>
-            <p className="mt-3 font-bold text-green-700">{msg}</p>
-            <a href="/account" className="mt-5 inline-block rounded-full bg-[#0b255c] px-6 py-3 font-black text-white">
-              Track Order
-            </a>
           </div>
         )}
       </section>
-    <MobileBottomNav />
+
+      <MobileBottomNav />
     </main>
   );
 }
-
-
-/* CUSTOMER OTP CHECKOUT */
