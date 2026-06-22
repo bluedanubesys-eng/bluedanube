@@ -42,6 +42,7 @@ function doGet(e) {
 
     if (action === "health") return json({ success: true, app: ERP_NAME, status: "running" });
     if (action === "setupSheets") return setupSheetsJson();
+    if (action === "setupFirstAdmin") return setupFirstAdmin(p);
 
     if (action === "shops") return getSheetData(SHEETS.shops, "shops");
     if (action === "users") return getByShop(SHEETS.users, shopId, "users");
@@ -2117,4 +2118,37 @@ function sendCustomerOrderStatusAutoEmail(orderId, status, note) {
     (note ? "<p><b>Note:</b> " + esc(note) + "</p>" : "");
 
   sendEmailLogged(order["Shop ID"], email, "Order Update - " + orderId + " - " + status, "customer-order-status", html);
+}
+
+
+function setupFirstAdmin(p) {
+  const email = String(p.email || "admin@bluedanube.com").trim();
+  const password = String(p.password || "Admin@12345").trim();
+  const name = String(p.name || "Blue Danube Admin").trim();
+
+  const existing = findUserByEmail(email);
+  if (existing) {
+    PropertiesService.getScriptProperties().setProperty("PWD_" + existing["User ID"], password);
+    updateRows(SHEETS.users, "User ID", existing["User ID"], {
+      "Role": "Owner",
+      "Status": "Active"
+    });
+    return json({ success: true, message: "Admin password reset", email: email, password: password });
+  }
+
+  const userId = generateId("USR", SHEETS.users);
+  getSheet(SHEETS.users).appendRow([
+    new Date(),
+    DEFAULT_SHOP_ID,
+    userId,
+    name,
+    email,
+    "",
+    "Owner",
+    "Active"
+  ]);
+
+  PropertiesService.getScriptProperties().setProperty("PWD_" + userId, password);
+
+  return json({ success: true, message: "Admin created", userId: userId, email: email, password: password });
 }
