@@ -1,5 +1,7 @@
 const ERP_NAME = "Blue Danube ERP";
 const ADMIN_EMAIL = "bluedanube.sys@gmail.com";
+const BRAND_LOGO_URL = "https://bluedanube.onrender.com/logo.png";
+const BRAND_WEBSITE_URL = "https://bluedanube.onrender.com";
 const TIMEZONE = "Asia/Yangon";
 const DEFAULT_SHOP_ID = "SHOP-000001";
 
@@ -618,7 +620,11 @@ function sendOrderEmail(email, customerName, orderId, total) {
       "",
       {
         htmlBody:
-          "<h2>Blue Danube</h2>" +
+          "<div style='text-align:center;background:#071b46;padding:24px;border-radius:18px 18px 0 0;'>" +
+"<img src='" + BRAND_LOGO_URL + "' width='86' style='background:white;border-radius:16px;padding:8px;'>" +
+"<h2 style='color:white;margin:12px 0 0;'>Blue Danube</h2>" +
+"<p style='color:#dbeafe;margin:4px 0 0;'>European Marketplace & ERP</p>" +
+"</div><div style='padding:24px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 18px 18px;'>" +
           "<p>Dear " + customerName + ",</p>" +
           "<p>Your order has been created successfully.</p>" +
           "<p><b>Order ID:</b> " + orderId + "</p>" +
@@ -829,7 +835,8 @@ function buildInvoiceHtml(order, items, title) {
     itemRows +=
       "<tr>" +
       "<td>" + (index + 1) + "</td>" +
-      "<td>" + esc(item["Product Name"]) + "</td>" +
+      "<td><img src='" + esc((findRowObject(SHEETS.products, "Product ID", item["Product ID"]) || {})["Image URL"] || "") + "' width='60' style='border-radius:10px;object-fit:cover;'></td>" +
+"<td>" + esc(item["Product Name"]) + "</td>" +
       "<td>" + esc(item.Brand) + "</td>" +
       "<td>" + esc(item.Size) + "</td>" +
       "<td>" + esc(item.Color) + "</td>" +
@@ -843,7 +850,10 @@ function buildInvoiceHtml(order, items, title) {
   <html>
     <body style="font-family:Arial,Helvetica,sans-serif;padding:32px;color:#111827;">
       <div style="border:2px solid #111827;border-radius:18px;padding:24px;">
-        <h1 style="margin:0;">BLUE DANUBE</h1>
+        <div style="text-align:center;margin-bottom:18px;">
+<img src="${BRAND_LOGO_URL}" width="90" style="object-fit:contain;margin-bottom:10px;">
+<h1 style="margin:0;">BLUE DANUBE</h1>
+</div>
         <p style="margin:6px 0 24px;color:#6b7280;">European Marketplace</p>
 
         <h2>${title}</h2>
@@ -857,7 +867,8 @@ function buildInvoiceHtml(order, items, title) {
           <thead>
             <tr>
               <th style="border:1px solid #ddd;padding:8px;">#</th>
-              <th style="border:1px solid #ddd;padding:8px;">Product</th>
+              <th style="border:1px solid #ddd;padding:8px;">Image</th>
+<th style="border:1px solid #ddd;padding:8px;">Product</th>
               <th style="border:1px solid #ddd;padding:8px;">Brand</th>
               <th style="border:1px solid #ddd;padding:8px;">Size</th>
               <th style="border:1px solid #ddd;padding:8px;">Color</th>
@@ -1155,12 +1166,17 @@ function sendOrderStatusEmail(data) {
   const subject = "Blue Danube Order Update - " + data.orderId;
 
   const body =
-    "<h2>Blue Danube</h2>" +
+    "<div style='text-align:center;background:#071b46;padding:24px;border-radius:18px 18px 0 0;'>" +
+"<img src='" + BRAND_LOGO_URL + "' width='86' style='background:white;border-radius:16px;padding:8px;'>" +
+"<h2 style='color:white;margin:12px 0 0;'>Blue Danube</h2>" +
+"<p style='color:#dbeafe;margin:4px 0 0;'>European Marketplace & ERP</p>" +
+"</div><div style='padding:24px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 18px 18px;'>" +
     "<p>Dear " + esc(order["Customer Name"]) + ",</p>" +
     "<p>Your order status has been updated.</p>" +
     "<p><b>Order ID:</b> " + esc(data.orderId) + "</p>" +
     "<p><b>Status:</b> " + esc(status) + "</p>" +
-    "<p><b>Total:</b> " + esc(order["Grand Total"]) + " MMK</p>";
+    "<p><b>Total:</b> " + esc(order["Grand Total"]) + " MMK</p>" +
+"</div>";
 
   return sendEmailLogged(order["Shop ID"], email, subject, "order-status", body);
 }
@@ -1372,7 +1388,8 @@ function sendGmailVerificationCode(data) {
     "<h2>Blue Danube ERP</h2>" +
     "<p>Your verification code is:</p>" +
     "<h1 style='letter-spacing:6px;'>" + code + "</h1>" +
-    "<p>This code will expire in 10 minutes.</p>"
+    "<p>This code will expire in 10 minutes.</p>" +
+"</div>"
   );
 
   return json({ success: true, message: "Verification code sent" });
@@ -1750,7 +1767,11 @@ function sendOrderInvoiceEmail(email, orderId, silent) {
 
   const subject = "Blue Danube Invoice - " + orderId;
   const body =
-    "<h2>Blue Danube</h2>" +
+    "<div style='text-align:center;background:#071b46;padding:24px;border-radius:18px 18px 0 0;'>" +
+"<img src='" + BRAND_LOGO_URL + "' width='86' style='background:white;border-radius:16px;padding:8px;'>" +
+"<h2 style='color:white;margin:12px 0 0;'>Blue Danube</h2>" +
+"<p style='color:#dbeafe;margin:4px 0 0;'>European Marketplace & ERP</p>" +
+"</div><div style='padding:24px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 18px 18px;'>" +
     "<p>Dear " + esc(bundle.order["Customer Name"]) + ",</p>" +
     "<p>Your order invoice is attached as a PDF.</p>" +
     "<p><b>Order ID:</b> " + esc(orderId) + "</p>" +
@@ -1777,7 +1798,11 @@ function sendOrderReceiptEmail(email, orderId, silent) {
 
   const subject = "Blue Danube Receipt - " + orderId;
   const body =
-    "<h2>Blue Danube</h2>" +
+    "<div style='text-align:center;background:#071b46;padding:24px;border-radius:18px 18px 0 0;'>" +
+"<img src='" + BRAND_LOGO_URL + "' width='86' style='background:white;border-radius:16px;padding:8px;'>" +
+"<h2 style='color:white;margin:12px 0 0;'>Blue Danube</h2>" +
+"<p style='color:#dbeafe;margin:4px 0 0;'>European Marketplace & ERP</p>" +
+"</div><div style='padding:24px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 18px 18px;'>" +
     "<p>Dear " + esc(bundle.order["Customer Name"]) + ",</p>" +
     "<p>Your payment receipt is attached as a PDF.</p>" +
     "<p><b>Order ID:</b> " + esc(orderId) + "</p>" +
@@ -1805,10 +1830,15 @@ function sendOrderDeliverySlipEmail(email, orderId, silent) {
 
   const subject = "Blue Danube Delivery Slip - " + orderId;
   const body =
-    "<h2>Blue Danube</h2>" +
+    "<div style='text-align:center;background:#071b46;padding:24px;border-radius:18px 18px 0 0;'>" +
+"<img src='" + BRAND_LOGO_URL + "' width='86' style='background:white;border-radius:16px;padding:8px;'>" +
+"<h2 style='color:white;margin:12px 0 0;'>Blue Danube</h2>" +
+"<p style='color:#dbeafe;margin:4px 0 0;'>European Marketplace & ERP</p>" +
+"</div><div style='padding:24px;border:1px solid #e5e7eb;border-top:0;border-radius:0 0 18px 18px;'>" +
     "<p>Dear " + esc(bundle.order["Customer Name"]) + ",</p>" +
     "<p>Your delivery slip is attached as a PDF.</p>" +
-    "<p><b>Order ID:</b> " + esc(orderId) + "</p>";
+    "<p><b>Order ID:</b> " + esc(orderId) + "</p>" +
+"</div>";
 
   const result = sendEmailLoggedWithAttachments(
     bundle.order["Shop ID"],
@@ -1973,7 +2003,8 @@ function sendCustomerCheckoutOtp(data) {
     "<h2>Blue Danube Checkout</h2>" +
     "<p>Your checkout verification code is:</p>" +
     "<h1 style='letter-spacing:6px;'>" + code + "</h1>" +
-    "<p>This code will expire in 10 minutes.</p>"
+    "<p>This code will expire in 10 minutes.</p>" +
+"</div>"
   );
 
   return json({ success: true, message: "OTP sent to customer Gmail" });
@@ -2086,7 +2117,8 @@ function sendCustomerOrderReceivedEmail(orderId) {
     "<p>We have received your order. Our team will review and confirm it soon.</p>" +
     "<p><b>Order ID:</b> " + esc(orderId) + "</p>" +
     "<p><b>Status:</b> Pending Review</p>" +
-    "<p><b>Total:</b> " + esc(order["Grand Total"]) + " MMK</p>";
+    "<p><b>Total:</b> " + esc(order["Grand Total"]) + " MMK</p>" +
+"</div>";
 
   sendEmailLogged(order["Shop ID"], email, "Order Received - " + orderId, "customer-order-received", html);
 }
@@ -2151,3 +2183,177 @@ function setupFirstAdmin(p) {
 
   return json({ success: true, message: "Admin created for Gmail OTP login", userId: userId, email: email });
 }
+
+
+/* ======================================================
+   BLUE DANUBE PROFESSIONAL EMAIL / PDF UI
+====================================================== */
+
+
+function getOrderItemsForEmail(orderId) {
+  const items = getSheetDataArray(SHEETS.orderItems)
+    .filter(function(i) {
+      return String(i["Order ID"]) === String(orderId);
+    });
+
+  return items.map(function(item) {
+    const product = findRowObject(SHEETS.products, "Product ID", item["Product ID"]);
+    return {
+      productId: item["Product ID"],
+      productName: item["Product Name"],
+      brand: item.Brand || "",
+      size: item.Size || "",
+      color: item.Color || "",
+      qty: item.Qty || 0,
+      unitPrice: item["Unit Price"] || 0,
+      lineTotal: item["Line Total"] || 0,
+      imageUrl: product ? product["Image URL"] || "" : ""
+    };
+  });
+}
+
+function buildProductRowsHtml(items) {
+  if (!items || !items.length) {
+    return "<p style='color:#64748b;'>No order items found.</p>";
+  }
+
+  return items.map(function(item) {
+    const img = item.imageUrl
+      ? "<img src='" + esc(item.imageUrl) + "' width='88' height='88' style='width:88px;height:88px;object-fit:cover;border-radius:14px;border:1px solid #e5e7eb;background:#f8fafc;'>"
+      : "<div style='width:88px;height:88px;border-radius:14px;background:#eef2f7;border:1px solid #e5e7eb;text-align:center;line-height:88px;color:#94a3b8;font-size:12px;'>No Image</div>";
+
+    return "" +
+      "<tr>" +
+      "<td style='padding:14px;border-bottom:1px solid #e5e7eb;vertical-align:top;width:110px;'>" + img + "</td>" +
+      "<td style='padding:14px;border-bottom:1px solid #e5e7eb;vertical-align:top;'>" +
+        "<div style='font-weight:800;color:#0f172a;font-size:15px;'>" + esc(item.productName) + "</div>" +
+        "<div style='margin-top:5px;color:#64748b;font-size:13px;'>" + esc(item.brand) + " • " + esc(item.color) + " • " + esc(item.size) + "</div>" +
+        "<div style='margin-top:8px;color:#0f172a;font-size:13px;'>Qty: <b>" + esc(item.qty) + "</b></div>" +
+      "</td>" +
+      "<td style='padding:14px;border-bottom:1px solid #e5e7eb;text-align:right;vertical-align:top;white-space:nowrap;'>" +
+        "<div style='color:#64748b;font-size:12px;'>Unit</div>" +
+        "<div style='font-weight:700;'>" + formatMoney(item.unitPrice) + "</div>" +
+        "<div style='margin-top:8px;color:#64748b;font-size:12px;'>Total</div>" +
+        "<div style='font-weight:900;color:#0b255c;'>" + formatMoney(item.lineTotal) + "</div>" +
+      "</td>" +
+      "</tr>";
+  }).join("");
+}
+
+function buildBrandedEmailHtml(title, subtitle, order, options) {
+  options = options || {};
+  const items = getOrderItemsForEmail(order["Order ID"]);
+  const status = options.status || order["Order Status"] || "";
+  const note = options.note || "";
+
+  return "" +
+  "<div style='margin:0;padding:0;background:#f4f6fb;font-family:Arial,Helvetica,sans-serif;color:#0f172a;'>" +
+    "<div style='max-width:760px;margin:0 auto;padding:28px 14px;'>" +
+      "<div style='background:#ffffff;border-radius:26px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 14px 35px rgba(15,23,42,.08);'>" +
+
+        "<div style='background:#071b46;padding:30px;text-align:center;'>" +
+          "<img src='" + BRAND_LOGO_URL + "' width='86' height='86' style='width:86px;height:86px;object-fit:contain;background:#fff;border-radius:20px;padding:8px;'>" +
+          "<h1 style='margin:14px 0 4px;color:#ffffff;font-size:28px;letter-spacing:.3px;'>Blue Danube</h1>" +
+          "<p style='margin:0;color:#dbeafe;font-size:14px;'>European Marketplace & ERP</p>" +
+        "</div>" +
+
+        "<div style='padding:30px;'>" +
+          "<p style='margin:0 0 8px;color:#0b255c;font-weight:900;letter-spacing:4px;font-size:12px;text-transform:uppercase;'>Blue Danube Notification</p>" +
+          "<h2 style='margin:0;color:#0f172a;font-size:26px;line-height:1.2;'>" + esc(title) + "</h2>" +
+          "<p style='margin:10px 0 24px;color:#64748b;font-size:15px;line-height:1.6;'>" + esc(subtitle) + "</p>" +
+
+          "<div style='display:block;background:#f8fafc;border:1px solid #e5e7eb;border-radius:20px;padding:18px;margin-bottom:22px;'>" +
+            "<table style='width:100%;border-collapse:collapse;font-size:14px;'>" +
+              "<tr><td style='padding:6px;color:#64748b;'>Order ID</td><td style='padding:6px;text-align:right;font-weight:900;'>" + esc(order["Order ID"]) + "</td></tr>" +
+              "<tr><td style='padding:6px;color:#64748b;'>Customer</td><td style='padding:6px;text-align:right;font-weight:700;'>" + esc(order["Customer Name"]) + "</td></tr>" +
+              "<tr><td style='padding:6px;color:#64748b;'>Phone</td><td style='padding:6px;text-align:right;'>" + esc(order.Phone) + "</td></tr>" +
+              "<tr><td style='padding:6px;color:#64748b;'>Email</td><td style='padding:6px;text-align:right;'>" + esc(order.Email) + "</td></tr>" +
+              "<tr><td style='padding:6px;color:#64748b;'>Address</td><td style='padding:6px;text-align:right;'>" + esc(order.Address) + " " + esc(order.Township) + "</td></tr>" +
+              "<tr><td style='padding:6px;color:#64748b;'>Status</td><td style='padding:6px;text-align:right;font-weight:900;color:#0b255c;'>" + esc(status) + "</td></tr>" +
+            "</table>" +
+          "</div>" +
+
+          (note ? "<div style='background:#fff7ed;border:1px solid #fed7aa;border-radius:18px;padding:14px;margin-bottom:22px;color:#9a3412;font-size:14px;'><b>Note:</b> " + esc(note) + "</div>" : "") +
+
+          "<h3 style='margin:0 0 12px;font-size:18px;color:#0f172a;'>Ordered Products</h3>" +
+          "<table style='width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:18px;overflow:hidden;'>" +
+            buildProductRowsHtml(items) +
+          "</table>" +
+
+          "<div style='margin-top:24px;background:#0b255c;color:white;border-radius:20px;padding:20px;'>" +
+            "<table style='width:100%;border-collapse:collapse;color:white;font-size:14px;'>" +
+              "<tr><td style='padding:5px;'>Subtotal</td><td style='padding:5px;text-align:right;font-weight:800;'>" + formatMoney(order.Subtotal) + "</td></tr>" +
+              "<tr><td style='padding:5px;'>Discount</td><td style='padding:5px;text-align:right;font-weight:800;'>" + formatMoney(order.Discount) + "</td></tr>" +
+              "<tr><td style='padding:5px;'>Delivery Fee</td><td style='padding:5px;text-align:right;font-weight:800;'>" + formatMoney(order["Delivery Fee"]) + "</td></tr>" +
+              "<tr><td style='padding:12px 5px 5px;border-top:1px solid rgba(255,255,255,.25);font-size:18px;font-weight:900;'>Grand Total</td><td style='padding:12px 5px 5px;border-top:1px solid rgba(255,255,255,.25);text-align:right;font-size:20px;font-weight:900;'>" + formatMoney(order["Grand Total"]) + "</td></tr>" +
+            "</table>" +
+          "</div>" +
+
+          "<p style='margin:22px 0 0;color:#64748b;font-size:13px;line-height:1.6;'>PDF documents such as invoice, receipt, or delivery slip may be attached to this email where applicable.</p>" +
+        "</div>" +
+
+        "<div style='background:#f8fafc;padding:20px 30px;text-align:center;color:#64748b;font-size:12px;border-top:1px solid #e5e7eb;'>" +
+          "<p style='margin:0 0 4px;font-weight:800;color:#0f172a;'>Blue Danube Marketplace</p>" +
+          "<p style='margin:0;'>" + BRAND_WEBSITE_URL + "</p>" +
+        "</div>" +
+
+      "</div>" +
+    "</div>" +
+  "</div>";
+}
+
+function formatMoney(v) {
+  const n = Number(v || 0);
+  return n.toLocaleString("en-US") + " MMK";
+}
+
+/* Override original email functions with branded UI */
+
+function sendCustomerOrderReceivedEmail(orderId) {
+  const order = findRowObject(SHEETS.orders, "Order ID", orderId);
+  if (!order) return json({ success: false, message: "Order not found" });
+
+  const email = resolveOrderEmail(order, "");
+  if (!email) return json({ success: false, message: "Customer email not found" });
+
+  const html = buildBrandedEmailHtml(
+    "Order Received",
+    "Thank you for your order. We have received your order and it is waiting for admin approval.",
+    order,
+    { status: order["Order Status"] || "Pending" }
+  );
+
+  return sendEmailLogged(order["Shop ID"], email, "Blue Danube Order Received - " + orderId, "customer-order-received", html);
+}
+
+function sendCustomerOrderStatusAutoEmail(orderId, status, note) {
+  const order = findRowObject(SHEETS.orders, "Order ID", orderId);
+  if (!order) return json({ success: false, message: "Order not found" });
+
+  const email = resolveOrderEmail(order, "");
+  if (!email) return json({ success: false, message: "Customer email not found" });
+
+  const html = buildBrandedEmailHtml(
+    "Order Update: " + status,
+    "Your Blue Danube order status has been updated.",
+    order,
+    { status: status, note: note || "" }
+  );
+
+  return sendEmailLogged(order["Shop ID"], email, "Blue Danube Order Update - " + orderId + " - " + status, "customer-order-status", html);
+}
+
+function sendAdminNewOrderEmail(orderId) {
+  const order = findRowObject(SHEETS.orders, "Order ID", orderId);
+  if (!order) return json({ success: false, message: "Order not found" });
+
+  const html = buildBrandedEmailHtml(
+    "New Order Approval Required",
+    "A new customer order has been submitted and requires admin review.",
+    order,
+    { status: order["Order Status"] || "Pending" }
+  );
+
+  return sendEmailLogged(order["Shop ID"], ADMIN_EMAIL, "New Order Approval Required - " + orderId, "admin-new-order", html);
+}
+
