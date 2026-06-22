@@ -1,4 +1,5 @@
 "use client";
+import { successPopup, errorPopup, loadingPopup, closePopup } from "@/lib/popup";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { erpPost } from "@/lib/api";
 import { CONFIG } from "@/lib/config";
@@ -6,7 +7,6 @@ import { fileToBase64 } from "@/lib/file";
 import { cartTotal, clearCart, getCart } from "@/services/cart.service";
 import type { CartItem } from "@/types/cart";
 import { useEffect, useState } from "react";
-import toast from "react-hot-toast";
 
 const steps = ["Customer", "Delivery", "Payment", "Review"];
 
@@ -36,7 +36,7 @@ export default function CheckoutPage() {
   const subtotal = cartTotal(items);
 
   async function sendOtp() {
-    if (!email) return toast.error("Please enter Gmail first");
+    if (!email) return errorPopup("Please enter Gmail first");
 
     const r = await erpPost({
       action: "sendCustomerCheckoutOtp",
@@ -46,9 +46,9 @@ export default function CheckoutPage() {
 
     if (r.success) {
       setOtpSent(true);
-      toast.success("OTP sent to Gmail");
+      successPopup("OTP sent to Gmail");
     } else {
-      toast.error(r.message || "OTP send failed");
+      errorPopup(r.message || "OTP send failed");
     }
   }
 
@@ -62,21 +62,21 @@ export default function CheckoutPage() {
 
     if (r.success) {
       setOtpVerified(true);
-      toast.success("Gmail verified");
+      successPopup("Gmail verified");
     } else {
-      toast.error(r.message || "Invalid OTP");
+      errorPopup(r.message || "Invalid OTP");
     }
   }
 
   async function submitOrder() {
-    if (!otpVerified) return toast.error("Please verify Gmail first");
-    if (!customerName || !phone || !email || !address) return toast.error("Please complete customer information");
-    if (!paymentFile) return toast.error("Please upload payment screenshot");
+    if (!otpVerified) return errorPopup("Please verify Gmail first");
+    if (!customerName || !phone || !email || !address) return errorPopup("Please complete customer information");
+    if (!paymentFile) return errorPopup("Please upload payment screenshot");
 
     for (const item of items) {
       const stockQty = Number(item.product["Stock Qty"] || 0);
       if (item.qty > stockQty) {
-        return toast.error(`${item.product["Product Name"]} only has ${stockQty} in stock`);
+        return errorPopup(`${item.product["Product Name"]} only has ${stockQty} in stock`);
       }
     }
 
@@ -127,9 +127,9 @@ export default function CheckoutPage() {
     if (res.success) {
       clearCart();
       setItems([]);
-      toast.success(`Order submitted: ${res.orderId}`);
+      successPopup(`Order submitted: ${res.orderId}`);
     } else {
-      toast.error(res.message || "Order failed");
+      errorPopup(res.message || "Order failed");
     }
   }
 

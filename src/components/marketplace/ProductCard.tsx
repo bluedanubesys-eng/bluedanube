@@ -1,5 +1,5 @@
 "use client";
-import toast from "react-hot-toast";
+import { successPopup, errorPopup, loadingPopup, closePopup } from "@/lib/popup";
 
 import { addToCart } from "@/services/cart.service";
 import { getProductImage } from "@/services/product.service";
@@ -24,7 +24,7 @@ export default function ProductCard({ product }: { product: Product }) {
       productName: product["Product Name"],
     });
 
-    toast.success(String("Added to wishlist"));
+    successPopup(String("Added to wishlist"));
   }
 
   return (

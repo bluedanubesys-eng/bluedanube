@@ -1,6 +1,4 @@
 "use client";
-import toast from "react-hot-toast";
-
 import { useMemo, useState } from "react";
 
 export type TableRow = Record<string, string | number | boolean | null | undefined>;
