@@ -100,6 +100,8 @@ function doPost(e) {
     if (action === "loginUser") return loginUser(data);
     if (action === "sendGmailVerificationCode") return sendGmailVerificationCode(data);
     if (action === "verifyGmailCode") return verifyGmailCode(data);
+    if (action === "sendCustomerCheckoutOtp") return sendCustomerCheckoutOtp(data);
+    if (action === "verifyCustomerCheckoutOtp") return verifyCustomerCheckoutOtp(data);
 
     // Uploads
     if (action === "uploadProductImage") return uploadProductImage(data);
@@ -1932,4 +1934,74 @@ function sendEmailLoggedWithAttachments(shopId, to, subject, type, htmlBody, att
 
     return { success: false, message: err.message };
   }
+}
+
+
+/* ======================================================
+   CUSTOMER CHECKOUT OTP - NO USER ACCOUNT REQUIRED
+====================================================== */
+
+function sendCustomerCheckoutOtp(data) {
+  const email = String(data.email || "").trim().toLowerCase();
+  const shopId = data.shopId || DEFAULT_SHOP_ID;
+
+  if (!email) return json({ success: false, message: "Customer Gmail required" });
+
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const expiry = new Date(Date.now() + 10 * 60 * 1000);
+
+  getSheet(SHEETS.emailVerifications).appendRow([
+    new Date(),
+    shopId,
+    email,
+    code,
+    expiry,
+    false,
+    "",
+    "Checkout"
+  ]);
+
+  sendEmailLogged(
+    shopId,
+    email,
+    "Blue Danube Checkout Verification Code",
+    "checkout-otp",
+    "<h2>Blue Danube Checkout</h2>" +
+    "<p>Your checkout verification code is:</p>" +
+    "<h1 style='letter-spacing:6px;'>" + code + "</h1>" +
+    "<p>This code will expire in 10 minutes.</p>"
+  );
+
+  return json({ success: true, message: "OTP sent to customer Gmail" });
+}
+
+function verifyCustomerCheckoutOtp(data) {
+  const email = String(data.email || "").trim().toLowerCase();
+  const code = String(data.code || "").trim();
+
+  if (!email || !code) return json({ success: false, message: "Email and OTP required" });
+
+  const sheet = getSheet(SHEETS.emailVerifications);
+  const rows = sheet.getDataRange().getValues();
+
+  for (let i = rows.length - 1; i >= 1; i--) {
+    const rowEmail = String(rows[i][2] || "").trim().toLowerCase();
+    const rowCode = String(rows[i][3] || "").trim();
+    const expiry = new Date(rows[i][4]);
+    const verified = rows[i][5];
+    const purpose = String(rows[i][7] || "");
+
+    if (rowEmail === email && rowCode === code && purpose === "Checkout" && verified !== true) {
+      if (expiry.getTime() < Date.now()) {
+        return json({ success: false, message: "OTP expired" });
+      }
+
+      sheet.getRange(i + 1, 6).setValue(true);
+      sheet.getRange(i + 1, 7).setValue(new Date());
+
+      return json({ success: true, message: "Customer Gmail verified" });
+    }
+  }
+
+  return json({ success: false, message: "Invalid OTP" });
 }

@@ -1,6 +1,5 @@
 "use client";
 
-import { sendOtp, verifyOtp } from "@/services/auth.service";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
 import { erpPost } from "@/lib/api";
 import { CONFIG } from "@/lib/config";
@@ -163,10 +162,16 @@ export default function CheckoutPage() {
                     <button
                       type="button"
                       onClick={async()=>{
-                        const r = await sendOtp(emailForOtp);
+                        const r = await erpPost({
+                          action: "sendCustomerCheckoutOtp",
+                          shopId: CONFIG.defaultShopId,
+                          email: emailForOtp,
+                        });
                         if(r.success){
                           setOtpSent(true);
                           alert("OTP sent to Gmail");
+                        } else {
+                          alert(r.message || "OTP send failed");
                         }
                       }}
                       className="rounded-xl bg-blue-950 px-4 py-3 font-black text-white"
@@ -193,12 +198,17 @@ export default function CheckoutPage() {
                       <button
                         type="button"
                         onClick={async()=>{
-                          const r = await verifyOtp(emailForOtp, otp);
+                          const r = await erpPost({
+                            action: "verifyCustomerCheckoutOtp",
+                            shopId: CONFIG.defaultShopId,
+                            email: emailForOtp,
+                            code: otp,
+                          });
                           if(r.success){
                             setOtpVerified(true);
                             alert("Gmail verified");
                           } else {
-                            alert("Invalid OTP");
+                            alert(r.message || "Invalid OTP");
                           }
                         }}
                         className="rounded-xl bg-green-600 px-4 py-3 font-black text-white"
