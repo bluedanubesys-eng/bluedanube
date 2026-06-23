@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { getCart } from "@/services/cart.service";
 
-export default function MarketplaceHeader() {
+export default function Premium CollectionHeader() {
   const [cartCount, setCartCount] = useState(0);
 
   function loadCart() {

@@ -1,6 +1,6 @@
 "use client";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
-import MarketplaceHeader from "@/components/layout/MarketplaceHeader";
+import Premium CollectionHeader from "@/components/layout/Premium CollectionHeader";
 import ProductCard from "@/components/marketplace/ProductCard";
 import { erpGet } from "@/lib/api";
 import { CONFIG } from "@/lib/config";
@@ -45,13 +45,13 @@ export default function ShopPage() {
 
   return (
     <main className="min-h-screen pb-16 md:pb-0 bg-[#f5f6f8] text-slate-950">
-      <MarketplaceHeader />
+      <Premium CollectionHeader />
 
       <section className="mx-auto max-w-7xl px-4 py-8">
         <div className="rounded-[2rem] bg-gradient-to-br from-[#071b46] to-[#0b255c] p-8 text-white shadow-xl">
           <p className="text-sm font-black uppercase tracking-[0.35em] text-amber-300">Blue Danube Shop</p>
           <h1 className="mt-4 text-4xl font-black md:text-5xl">European products collection</h1>
-          <p className="mt-4 max-w-2xl text-blue-100">Browse real products from Blue Danube ERP database.</p>
+          <p className="mt-4 max-w-2xl text-blue-100">Browse real products from Blue Danube database.</p>
 
           <input
             value={query}

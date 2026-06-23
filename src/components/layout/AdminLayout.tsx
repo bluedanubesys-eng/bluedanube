@@ -40,8 +40,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           menuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
       >
-        <h1 className="text-xl font-bold text-blue-950">Blue Danube ERP</h1>
-        <p className="text-xs text-slate-500">European Marketplace</p>
+        <h1 className="text-xl font-bold text-blue-950">Blue Danube</h1>
+        <p className="text-xs text-slate-500">Premium Collection</p>
 
         <nav className="mt-8 space-y-1">
           {menu.map(([label, href]) => (

@@ -57,7 +57,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-[2rem] bg-white p-8 shadow-xl ring-1 ring-slate-200">
         <div className="flex flex-col items-center text-center">
           <Image src="/logo.png" alt="Blue Danube" width={96} height={96} className="h-24 w-24 object-contain" />
-          <h1 className="mt-4 text-3xl font-black text-blue-950">Blue Danube ERP</h1>
+          <h1 className="mt-4 text-3xl font-black text-blue-950">Blue Danube</h1>
           <p className="mt-2 text-sm text-slate-500">Admin Gmail Verification Login</p>
         </div>
 

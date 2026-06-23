@@ -1,5 +1,5 @@
 "use client";
-import MarketplaceHeader from "@/components/layout/MarketplaceHeader";
+import Premium CollectionHeader from "@/components/layout/Premium CollectionHeader";
 import ProductCard from "@/components/marketplace/ProductCard";
 import { getProducts } from "@/services/product.service";
 import type { Product } from "@/types/product";
@@ -19,7 +19,7 @@ export default function BrandPage() {
 
   return (
     <main className="min-h-screen bg-[#f5f6f8]">
-      <MarketplaceHeader />
+      <Premium CollectionHeader />
 
       <section className="mx-auto max-w-7xl px-4 py-8">
         <div className="rounded-[2rem] bg-white p-8 shadow-sm ring-1 ring-slate-200">

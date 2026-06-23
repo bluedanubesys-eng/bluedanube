@@ -62,7 +62,7 @@ export default function DashboardPage() {
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-sm font-black uppercase tracking-[0.25em] text-blue-900">
-            Blue Danube ERP
+            Blue Danube
           </p>
           <h1 className="mt-2 text-4xl font-black">Executive Dashboard</h1>
           <p className="mt-2 text-slate-500">
