@@ -59,7 +59,7 @@ export default function MarketplaceHeader() {
         </div>
       </div>
 
-      <nav className="border-b bg-white">
+      <nav className="bg-white">
         <div className="mx-auto flex max-w-7xl gap-3 overflow-x-auto px-4 py-3 text-sm font-black text-slate-700">
           {["All", "New Arrivals", "Fashion", "Shoes", "Bags", "Accessories", "Beauty", "Lifestyle", "Deals"].map((x) => (
             <a key={x} href="/shop" className="whitespace-nowrap rounded-full bg-slate-100 px-4 py-2 hover:bg-[#0b255c] hover:text-white">
