@@ -1,6 +1,6 @@
 "use client";
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
-import Premium CollectionHeader from "@/components/layout/Premium CollectionHeader";
+import MarketplaceHeader from "@/components/layout/MarketplaceHeader";
 import ProductCard from "@/components/marketplace/ProductCard";
 import { erpGet } from "@/lib/api";
 import { CONFIG } from "@/lib/config";
@@ -45,7 +45,7 @@ export default function ShopPage() {
 
   return (
     <main className="min-h-screen pb-16 md:pb-0 bg-[#f5f6f8] text-slate-950">
-      <Premium CollectionHeader />
+      <MarketplaceHeader />
 
       <section className="mx-auto max-w-7xl px-4 py-8">
         <div className="rounded-[2rem] bg-gradient-to-br from-[#071b46] to-[#0b255c] p-8 text-white shadow-xl">

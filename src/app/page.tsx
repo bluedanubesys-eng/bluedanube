@@ -1,5 +1,5 @@
 import MobileBottomNav from "@/components/layout/MobileBottomNav";
-import Premium CollectionHeader from "@/components/layout/Premium CollectionHeader";
+import MarketplaceHeader from "@/components/layout/MarketplaceHeader";
 
 const categories = [
   ["Fashion", "Elegant European clothing"],
@@ -11,7 +11,7 @@ const categories = [
 export default function HomePage() {
   return (
     <main className="min-h-screen pb-16 md:pb-0 bg-[#f5f6f8] text-slate-950">
-      <Premium CollectionHeader />
+      <MarketplaceHeader />
 
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl">

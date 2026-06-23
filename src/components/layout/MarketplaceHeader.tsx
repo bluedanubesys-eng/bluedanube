@@ -3,7 +3,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { getCart } from "@/services/cart.service";
 
-export default function Premium CollectionHeader() {
+export default function MarketplaceHeader() {
   const [cartCount, setCartCount] = useState(0);
 
   function loadCart() {
@@ -37,7 +37,7 @@ export default function Premium CollectionHeader() {
               width={42}
               height={42}
               priority
-              className="h-10 w-10 rounded-xl bg-white object-contain p-1"
+              className="h-10 w-10 object-contain"
             />
             <span className="text-2xl font-black tracking-tight">Blue Danube</span>
           </a>
