@@ -16,7 +16,7 @@ export default function HomePage() {
       <section className="mx-auto max-w-7xl px-4 py-10 sm:px-6 lg:px-8">
       <div className="overflow-hidden rounded-[2rem] border border-blue-100 bg-white shadow-xl">
         <img
-          src="/images/hero-bluedanube.png"
+          src="/hero-bluedanube.png"
           alt="Blue Danube Premium Collection"
           className="h-auto w-full object-cover"
         />
