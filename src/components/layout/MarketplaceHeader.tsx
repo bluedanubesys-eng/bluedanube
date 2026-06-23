@@ -20,7 +20,7 @@ export default function MarketplaceHeader() {
     <header className="sticky top-0 z-50 shadow-sm">
       <div className="bg-[#071b46] text-white">
         <div className="mx-auto flex max-w-7xl items-center justify-between px-4 py-2 text-xs font-semibold">
-          <p>European products curated for international customers</p>
+          <p>Premium Collection</p>
           <div className="flex gap-4">
             <a href="/account">Track Order</a>
             <a href="/partner">Sell With Us</a>
