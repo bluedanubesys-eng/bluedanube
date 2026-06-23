@@ -45,7 +45,7 @@ export default function MarketplaceHeader() {
           <div className="hidden flex-1 md:block">
             <input
               className="w-full rounded-full bg-white px-6 py-3 text-sm font-semibold text-slate-900 outline-none ring-2 ring-transparent focus:ring-amber-300"
-              placeholder="Search European products, brands, categories..."
+              placeholder="Search products..."
             />
           </div>
 
