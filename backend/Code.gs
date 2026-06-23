@@ -2240,67 +2240,81 @@ function buildProductRowsHtml(items) {
   }).join("");
 }
 
-function buildBrandedEmailHtml(title, subtitle, order, options) {
-  options = options || {};
-  const items = getOrderItemsForEmail(order["Order ID"]);
-  const status = options.status || order["Order Status"] || "";
-  const note = options.note || "";
 
-  return "" +
-  "<div style='margin:0;padding:0;background:#f4f6fb;font-family:Arial,Helvetica,sans-serif;color:#0f172a;'>" +
-    "<div style='max-width:760px;margin:0 auto;padding:28px 14px;'>" +
-      "<div style='background:#ffffff;border-radius:26px;overflow:hidden;border:1px solid #e5e7eb;box-shadow:0 14px 35px rgba(15,23,42,.08);'>" +
+function buildBrandedEmailHtml(title, message, order, extra) {
+  extra = extra || {};
 
-        "<div style='background:#071b46;padding:30px;text-align:center;'>" +
-          "<img src='" + BRAND_LOGO_URL + "' width='86' height='86' style='width:86px;height:86px;object-fit:contain;background:#fff;border-radius:20px;padding:8px;'>" +
-          "<h1 style='margin:14px 0 4px;color:#ffffff;font-size:28px;letter-spacing:.3px;'>Blue Danube</h1>" +
-          "<p style='margin:0;color:#dbeafe;font-size:14px;'>European Marketplace & ERP</p>" +
+  const orderId = esc(order["Order ID"] || "");
+  const customer = esc(order["Customer Name"] || "");
+  const phone = esc(order.Phone || "");
+  const email = esc(order.Email || "");
+  const address = esc(order.Address || "");
+  const status = esc(extra.status || order["Order Status"] || "");
+  const total = esc(order["Grand Total"] || "");
+
+  const items = getOrderItemsForEmail(orderId);
+
+  let itemRows = "";
+  items.forEach(function(item) {
+    const img = esc(item.imageUrl || "");
+    itemRows +=
+      "<tr>" +
+        "<td style='padding:12px 0;border-bottom:1px solid #e5e7eb;width:72px;vertical-align:top;'>" +
+          (img ? "<img src='" + img + "' width='64' height='64' style='display:block;border-radius:12px;object-fit:cover;border:1px solid #e5e7eb;'>" : "") +
+        "</td>" +
+        "<td style='padding:12px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top;'>" +
+          "<div style='font-size:15px;font-weight:700;color:#0f172a;line-height:1.3;'>" + esc(item.productName) + "</div>" +
+          "<div style='font-size:13px;color:#64748b;line-height:1.5;'>" + esc(item.brand) + "</div>" +
+          "<div style='font-size:13px;color:#64748b;line-height:1.5;'>" + esc(item.color) + " / " + esc(item.size) + "</div>" +
+          "<div style='font-size:13px;color:#0f172a;line-height:1.5;'>Qty: " + esc(item.qty) + "</div>" +
+        "</td>" +
+        "<td style='padding:12px 0;border-bottom:1px solid #e5e7eb;text-align:right;vertical-align:top;white-space:nowrap;font-size:14px;font-weight:700;color:#0f172a;'>" +
+          esc(item.lineTotal || item.total || item.unitPrice) + " MMK" +
+        "</td>" +
+      "</tr>";
+  });
+
+  return "<!doctype html>" +
+  "<html><body style='margin:0;padding:0;background:#f8fafc;font-family:Arial,Helvetica,sans-serif;color:#0f172a;'>" +
+    "<div style='width:100%;background:#f8fafc;padding:16px 0;'>" +
+      "<div style='max-width:600px;width:100%;margin:0 auto;background:#ffffff;border:1px solid #e5e7eb;border-radius:18px;overflow:hidden;'>" +
+
+        "<div style='text-align:center;padding:28px 20px 18px;background:#ffffff;border-bottom:1px solid #e5e7eb;'>" +
+          "<img src='" + BRAND_LOGO_URL + "' width='76' height='76' style='display:block;margin:0 auto 12px;border-radius:16px;object-fit:contain;'>" +
+          "<div style='font-size:28px;font-weight:800;color:#0f172a;line-height:1.2;'>Blue Danube</div>" +
+          "<div style='font-size:15px;color:#64748b;margin-top:6px;'>European Marketplace & ERP</div>" +
         "</div>" +
 
-        "<div style='padding:30px;'>" +
-          "<p style='margin:0 0 8px;color:#0b255c;font-weight:900;letter-spacing:4px;font-size:12px;text-transform:uppercase;'>Blue Danube Notification</p>" +
-          "<h2 style='margin:0;color:#0f172a;font-size:26px;line-height:1.2;'>" + esc(title) + "</h2>" +
-          "<p style='margin:10px 0 24px;color:#64748b;font-size:15px;line-height:1.6;'>" + esc(subtitle) + "</p>" +
+        "<div style='padding:28px 20px;'>" +
+          "<div style='font-size:12px;letter-spacing:5px;font-weight:800;color:#0b2a63;margin-bottom:16px;'>BLUE DANUBE NOTIFICATION</div>" +
+          "<h1 style='margin:0 0 12px;font-size:30px;line-height:1.15;color:#0f172a;'>" + esc(title) + "</h1>" +
+          "<p style='margin:0 0 24px;font-size:17px;line-height:1.6;color:#64748b;'>" + esc(message) + "</p>" +
 
-          "<div style='display:block;background:#f8fafc;border:1px solid #e5e7eb;border-radius:20px;padding:18px;margin-bottom:22px;'>" +
-            "<table style='width:100%;border-collapse:collapse;font-size:14px;'>" +
-              "<tr><td style='padding:6px;color:#64748b;'>Order ID</td><td style='padding:6px;text-align:right;font-weight:900;'>" + esc(order["Order ID"]) + "</td></tr>" +
-              "<tr><td style='padding:6px;color:#64748b;'>Customer</td><td style='padding:6px;text-align:right;font-weight:700;'>" + esc(order["Customer Name"]) + "</td></tr>" +
-              "<tr><td style='padding:6px;color:#64748b;'>Phone</td><td style='padding:6px;text-align:right;'>" + esc(order.Phone) + "</td></tr>" +
-              "<tr><td style='padding:6px;color:#64748b;'>Email</td><td style='padding:6px;text-align:right;'>" + esc(order.Email) + "</td></tr>" +
-              "<tr><td style='padding:6px;color:#64748b;'>Address</td><td style='padding:6px;text-align:right;'>" + esc(order.Address) + " " + esc(order.Township) + "</td></tr>" +
-              "<tr><td style='padding:6px;color:#64748b;'>Status</td><td style='padding:6px;text-align:right;font-weight:900;color:#0b255c;'>" + esc(status) + "</td></tr>" +
-            "</table>" +
-          "</div>" +
-
-          (note ? "<div style='background:#fff7ed;border:1px solid #fed7aa;border-radius:18px;padding:14px;margin-bottom:22px;color:#9a3412;font-size:14px;'><b>Note:</b> " + esc(note) + "</div>" : "") +
-
-          "<h3 style='margin:0 0 12px;font-size:18px;color:#0f172a;'>Ordered Products</h3>" +
-          "<table style='width:100%;border-collapse:collapse;border:1px solid #e5e7eb;border-radius:18px;overflow:hidden;'>" +
-            buildProductRowsHtml(items) +
+          "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:separate;border-spacing:0;background:#f8fafc;border:1px solid #e5e7eb;border-radius:16px;margin-bottom:26px;'>" +
+            "<tr><td style='padding:16px 18px;color:#64748b;font-size:14px;'>Order ID</td><td style='padding:16px 18px;text-align:right;font-size:14px;font-weight:700;color:#0f172a;word-break:break-word;'>" + orderId + "</td></tr>" +
+            "<tr><td style='padding:0 18px 14px;color:#64748b;font-size:14px;'>Customer</td><td style='padding:0 18px 14px;text-align:right;font-size:14px;font-weight:600;color:#0f172a;word-break:break-word;'>" + customer + "</td></tr>" +
+            "<tr><td style='padding:0 18px 14px;color:#64748b;font-size:14px;'>Phone</td><td style='padding:0 18px 14px;text-align:right;font-size:14px;color:#0f172a;word-break:break-word;'>" + phone + "</td></tr>" +
+            "<tr><td style='padding:0 18px 14px;color:#64748b;font-size:14px;'>Email</td><td style='padding:0 18px 14px;text-align:right;font-size:14px;color:#2563eb;word-break:break-all;'>" + email + "</td></tr>" +
+            "<tr><td style='padding:0 18px 14px;color:#64748b;font-size:14px;'>Address</td><td style='padding:0 18px 14px;text-align:right;font-size:14px;color:#0f172a;word-break:break-word;'>" + address + "</td></tr>" +
+            "<tr><td style='padding:0 18px 16px;color:#64748b;font-size:14px;'>Status</td><td style='padding:0 18px 16px;text-align:right;font-size:14px;font-weight:700;color:#0b2a63;word-break:break-word;'>" + status + "</td></tr>" +
           "</table>" +
 
-          "<div style='margin-top:24px;background:#0b255c;color:white;border-radius:20px;padding:20px;'>" +
-            "<table style='width:100%;border-collapse:collapse;color:white;font-size:14px;'>" +
-              "<tr><td style='padding:5px;'>Subtotal</td><td style='padding:5px;text-align:right;font-weight:800;'>" + formatMoney(order.Subtotal) + "</td></tr>" +
-              "<tr><td style='padding:5px;'>Discount</td><td style='padding:5px;text-align:right;font-weight:800;'>" + formatMoney(order.Discount) + "</td></tr>" +
-              "<tr><td style='padding:5px;'>Delivery Fee</td><td style='padding:5px;text-align:right;font-weight:800;'>" + formatMoney(order["Delivery Fee"]) + "</td></tr>" +
-              "<tr><td style='padding:12px 5px 5px;border-top:1px solid rgba(255,255,255,.25);font-size:18px;font-weight:900;'>Grand Total</td><td style='padding:12px 5px 5px;border-top:1px solid rgba(255,255,255,.25);text-align:right;font-size:20px;font-weight:900;'>" + formatMoney(order["Grand Total"]) + "</td></tr>" +
-            "</table>" +
-          "</div>" +
+          "<h2 style='margin:0 0 10px;font-size:22px;color:#0f172a;'>Ordered Products</h2>" +
+          "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='border-collapse:collapse;table-layout:fixed;'>" +
+            itemRows +
+          "</table>" +
 
-          "<p style='margin:22px 0 0;color:#64748b;font-size:13px;line-height:1.6;'>PDF documents such as invoice, receipt, or delivery slip may be attached to this email where applicable.</p>" +
+          "<table role='presentation' width='100%' cellpadding='0' cellspacing='0' style='margin-top:24px;background:#0b2a63;border-radius:16px;color:#ffffff;'>" +
+            "<tr><td style='padding:18px 20px;font-size:16px;'>Grand Total</td><td style='padding:18px 20px;text-align:right;font-size:18px;font-weight:800;white-space:nowrap;'>" + total + " MMK</td></tr>" +
+          "</table>" +
+
+          "<p style='margin:22px 0 0;font-size:13px;line-height:1.6;color:#64748b;text-align:center;'>Thank you for shopping with Blue Danube.</p>" +
         "</div>" +
-
-        "<div style='background:#f8fafc;padding:20px 30px;text-align:center;color:#64748b;font-size:12px;border-top:1px solid #e5e7eb;'>" +
-          "<p style='margin:0 0 4px;font-weight:800;color:#0f172a;'>Blue Danube Marketplace</p>" +
-          "<p style='margin:0;'>" + BRAND_WEBSITE_URL + "</p>" +
-        "</div>" +
-
       "</div>" +
     "</div>" +
-  "</div>";
+  "</body></html>";
 }
+
 
 function formatMoney(v) {
   const n = Number(v || 0);
